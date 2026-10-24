@@ -85,7 +85,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
             </button>
 
             {questExpanded && (
-              <div className="p-2.5 text-[11px] space-y-1.5 text-slate-200 border-t border-slate-800/80">
+              <div className="p-2.5 text-[11px] space-y-1.5 text-slate-200 border-t border-slate-800/80 font-fun">
                 {isBirthdayRoom ? (
                   <>
                     <div className="flex items-center gap-1.5 text-pink-300 font-medium">
@@ -144,8 +144,8 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                     </div>
 
                     {/* Final Objective */}
-                    <div className="pt-1.5 border-t border-slate-800 flex items-center justify-between text-[10px]">
-                      <div className="flex items-center gap-1.5">
+                    <div className="pt-1.5 border-t border-slate-800 flex items-center justify-between gap-1 text-[10px]">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         {questState.heartRestored ? (
                           <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
                         ) : crystalsCount >= totalCrystals ? (
@@ -153,11 +153,11 @@ export const GameHUD: React.FC<GameHUDProps> = ({
                         ) : (
                           <Lock className="w-3 h-3 text-slate-500 shrink-0" />
                         )}
-                        <span className={questState.heartRestored ? 'text-emerald-400 font-bold' : crystalsCount >= totalCrystals ? 'text-amber-300 font-bold' : 'text-slate-400'}>
+                        <span className={`truncate ${questState.heartRestored ? 'text-emerald-400 font-bold' : crystalsCount >= totalCrystals ? 'text-amber-300 font-bold' : 'text-slate-400'}`}>
                           Пробуди Сердце острова
                         </span>
                       </div>
-                      <span className="text-[9px] text-slate-400">
+                      <span className="text-[9px] text-slate-400 shrink-0 font-mono bg-slate-950/40 px-1 py-0.2 rounded border border-slate-800">
                         {questState.heartRestored ? 'Готово' : crystalsCount >= totalCrystals ? 'Доступно!' : 'Заблокировано'}
                       </span>
                     </div>

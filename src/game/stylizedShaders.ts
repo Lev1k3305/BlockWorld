@@ -22,23 +22,23 @@ export interface StylizedTerrainOptions {
  * Creates a stylized terrain/grass shader extending MeshStandardMaterial.
  * 
  * Features:
- * - 4-stop artistic vertical gradient (Deep Loam -> Lush Emerald Meadow -> Sun-kissed Lime -> Luminous Tips)
+ * - 5-stop artistic vertical height gradient (Deep Loam -> Spring Turf -> Lush Emerald -> Golden Sunshine -> Peak Flora)
  * - Slope-aware rock texturing: steep slopes and cliff faces smoothly blend into weathered stylized stone
  * - Procedural multi-frequency turf mottling to eliminate flat monochrome patches
- * - Animated vertex wind sway on upper grassy geometry
- * - Soft ambient sunbeam/cloud shadow dapples drifting smoothly across the island
- * - Seamless integration with Three.js PBR lighting, RoomEnvironment reflections, and soft PCF shadows
+ * - Animated dual-frequency vertex wind sway on upper grassy geometry
+ * - Soft ambient sunbeam and drifting cloud shadow dapples across the island
+ * - Seamless integration with Three.js PBR lighting, RoomEnvironment reflections, and PCF shadows
  */
 export function createStylizedTerrainMaterial(options: StylizedTerrainOptions | number = 0x2e8544): THREE.MeshStandardMaterial {
   const opts: StylizedTerrainOptions = typeof options === 'number' ? { baseColorHex: options } : options;
   const baseColor = opts.baseColorHex ?? 0x2e8544;
-  const roughness = opts.roughness ?? 0.78;
+  const roughness = opts.roughness ?? 0.75;
 
-  const rootCol = opts.rootColor ?? new THREE.Color(0.09, 0.23, 0.12);
-  const meadowCol = opts.meadowColor ?? new THREE.Color(0.18, 0.54, 0.24);
-  const goldenCol = opts.goldenColor ?? new THREE.Color(0.40, 0.70, 0.20);
-  const tipCol = opts.tipColor ?? new THREE.Color(0.60, 0.86, 0.30);
-  const cliffCol = opts.cliffColor ?? new THREE.Color(0.28, 0.33, 0.40);
+  const rootCol = opts.rootColor ?? new THREE.Color(0.08, 0.22, 0.11);
+  const meadowCol = opts.meadowColor ?? new THREE.Color(0.16, 0.52, 0.22);
+  const goldenCol = opts.goldenColor ?? new THREE.Color(0.38, 0.68, 0.18);
+  const tipCol = opts.tipColor ?? new THREE.Color(0.58, 0.85, 0.28);
+  const cliffCol = opts.cliffColor ?? new THREE.Color(0.26, 0.32, 0.38);
 
   const mat = new THREE.MeshStandardMaterial({
     color: baseColor,
@@ -66,11 +66,14 @@ export function createStylizedTerrainMaterial(options: StylizedTerrainOptions | 
       '#include <begin_vertex>',
       `
       #include <begin_vertex>
-      // Subtle organic wind sway for grass surfaces based on elevation and position
-      float windFactor = clamp(position.y * 0.75, 0.0, 1.0);
-      float windVal = sin(position.x * 1.5 + uTime * 2.1) * cos(position.z * 1.3 + uTime * 1.7);
-      transformed.x += windVal * 0.035 * windFactor;
-      transformed.z += windVal * 0.025 * windFactor;
+      // Enhanced dual-frequency organic wind sway for grass and canopy surfaces
+      float windFactor = clamp(position.y * 0.82, 0.0, 1.0);
+      float windWave1 = sin(position.x * 1.65 + uTime * 2.3) * cos(position.z * 1.45 + uTime * 1.9);
+      float windWave2 = cos(position.x * 3.2 - uTime * 3.1) * sin(position.z * 2.8 + uTime * 2.5) * 0.4;
+      float totalWind = (windWave1 + windWave2) * 0.042 * windFactor;
+
+      transformed.x += totalWind;
+      transformed.z += totalWind * 0.75;
       
       vWorldPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;
       vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
@@ -94,28 +97,27 @@ export function createStylizedTerrainMaterial(options: StylizedTerrainOptions | 
       `
       #include <color_fragment>
 
-      // 1. Artistic 4-Stop Height-Based Meadow Gradient
-      float hFactor = clamp((vWorldPosition.y + 0.6) / 3.6, 0.0, 1.0);
+      // 1. Artistic 5-Stop Height-Based Meadow Gradient
+      float hFactor = clamp((vWorldPosition.y + 0.6) / 3.8, 0.0, 1.0);
 
-      vec3 grassGrad = mix(uRootCol, uMeadowCol, smoothstep(0.0, 0.35, hFactor));
-      grassGrad = mix(grassGrad, uGoldenCol, smoothstep(0.35, 0.72, hFactor));
-      grassGrad = mix(grassGrad, uTipCol, smoothstep(0.72, 1.0, hFactor));
+      vec3 grassGrad = mix(uRootCol, uMeadowCol, smoothstep(0.0, 0.32, hFactor));
+      grassGrad = mix(grassGrad, uGoldenCol, smoothstep(0.32, 0.68, hFactor));
+      grassGrad = mix(grassGrad, uTipCol, smoothstep(0.68, 1.0, hFactor));
 
-      // 2. Procedural Organic Mottling (Breaks up flat surfaces into vibrant natural turf)
-      float mottle1 = sin(vWorldPosition.x * 1.85) * sin(vWorldPosition.z * 1.85);
-      float mottle2 = sin(vWorldPosition.x * 4.2 + 0.8) * cos(vWorldPosition.z * 4.2 + 0.4) * 0.5;
-      float mottling = (mottle1 + mottle2) * 0.075;
+      // 2. Procedural Multi-Frequency Mottling
+      float mottle1 = sin(vWorldPosition.x * 1.95) * sin(vWorldPosition.z * 1.95);
+      float mottle2 = sin(vWorldPosition.x * 4.4 + 0.9) * cos(vWorldPosition.z * 4.4 + 0.5) * 0.5;
+      float mottling = (mottle1 + mottle2) * 0.082;
 
       // 3. Slope-Aware Cliff Rock Blending
-      // Surfaces pointing outward or downwards smoothly transition into weathered stylized stone
       float slope = clamp(vWorldNormal.y, 0.0, 1.0);
-      vec3 combinedTerrain = mix(uCliffCol, grassGrad + mottling, smoothstep(0.35, 0.72, slope));
+      vec3 combinedTerrain = mix(uCliffCol, grassGrad + mottling, smoothstep(0.32, 0.70, slope));
 
-      // 4. Subtle Ambient Sunbeam Dapples (Soft slow drifting cloud/canopy illumination)
-      float dapple = sin(vWorldPosition.x * 0.28 + uTime * 0.18) * cos(vWorldPosition.z * 0.28 + uTime * 0.14);
-      combinedTerrain += vec3(0.04, 0.06, 0.02) * clamp(dapple, 0.0, 1.0);
+      // 4. Subtle Ambient Sunbeam Dapples
+      float dapple = sin(vWorldPosition.x * 0.30 + uTime * 0.20) * cos(vWorldPosition.z * 0.30 + uTime * 0.15);
+      combinedTerrain += vec3(0.045, 0.065, 0.025) * clamp(dapple, 0.0, 1.0);
 
-      diffuseColor.rgb = mix(diffuseColor.rgb, combinedTerrain, 0.78);
+      diffuseColor.rgb = mix(diffuseColor.rgb, combinedTerrain, 0.82);
       `
     );
   };
@@ -140,26 +142,26 @@ export interface StylizedWaterOptions {
  * Creates a stylized water shader extending MeshStandardMaterial.
  * 
  * Features:
- * - Smooth vertex wave animation in vertex shader (multi-harmonic ripples + vertical cascade flow)
- * - 3-tier artistic aquatic color gradient (Mystic Abyss -> Azure Lagoon -> Sunlit Turquoise)
- * - Dual-layer scrolling procedural caustics with interference wave harmonics
+ * - Smooth multi-harmonic vertex wave animation for lakes and vertical waterfalls
+ * - 3-tier aquatic color gradient (Abyssal Azure -> Lagoon Turquoise -> Sunlit Aquamarine)
+ * - Dual-layer scrolling caustics with interference wave ribbons
  * - Animated glistening wave crests and foam highlights
- * - High-specular reflections and translucent refraction
+ * - High-specular reflections and translucent depth transparency
  */
 export function createStylizedWaterMaterial(options?: StylizedWaterOptions): THREE.MeshStandardMaterial {
   const opts = options || {};
   const baseColor = opts.baseColorHex ?? 0x0ea5e9;
-  const deepCol = opts.deepColor ?? new THREE.Color(0.02, 0.22, 0.48);
-  const midCol = opts.midColor ?? new THREE.Color(0.06, 0.52, 0.76);
-  const shallowCol = opts.shallowColor ?? new THREE.Color(0.20, 0.88, 0.94);
-  const foamCol = opts.foamColor ?? new THREE.Color(0.92, 0.98, 1.00);
+  const deepCol = opts.deepColor ?? new THREE.Color(0.02, 0.20, 0.45);
+  const midCol = opts.midColor ?? new THREE.Color(0.05, 0.50, 0.74);
+  const shallowCol = opts.shallowColor ?? new THREE.Color(0.18, 0.86, 0.92);
+  const foamCol = opts.foamColor ?? new THREE.Color(0.94, 0.99, 1.00);
 
   const mat = new THREE.MeshStandardMaterial({
     color: baseColor,
     transparent: true,
-    opacity: opts.opacity ?? 0.86,
-    roughness: opts.roughness ?? 0.06,
-    metalness: opts.metalness ?? 0.22,
+    opacity: opts.opacity ?? 0.88,
+    roughness: opts.roughness ?? 0.05,
+    metalness: opts.metalness ?? 0.25,
   });
 
   mat.onBeforeCompile = (shader) => {
@@ -181,19 +183,19 @@ export function createStylizedWaterMaterial(options?: StylizedWaterOptions): THR
       `
       #include <begin_vertex>
       
-      // Multi-harmonic smooth vertex wave displacement for natural water movement
-      float waveMain = sin(position.x * 1.6 + uTime * 2.2) * cos(position.z * 1.6 + uTime * 1.8) * 0.045;
-      float waveDetail = sin(position.x * 3.4 - uTime * 1.7) * cos(position.z * 2.8 + uTime * 1.5) * 0.022;
-      float waveCross = cos((position.x + position.z) * 2.0 + uTime * 2.5) * 0.015;
+      // Multi-harmonic vertex wave displacement
+      float waveMain = sin(position.x * 1.75 + uTime * 2.4) * cos(position.z * 1.75 + uTime * 1.9) * 0.05;
+      float waveDetail = sin(position.x * 3.6 - uTime * 1.8) * cos(position.z * 3.0 + uTime * 1.6) * 0.025;
+      float waveCross = cos((position.x + position.z) * 2.2 + uTime * 2.7) * 0.018;
       
-      // For horizontal water bodies (lake, ponds): animate Y elevation
+      // Horizontal water (lake, pond): animate Y elevation
       transformed.y += (waveMain + waveDetail + waveCross);
 
-      // For vertical waterfall surfaces: animate undulating cascading ripples
+      // Vertical waterfall surfaces: animate cascading ripples
       if (abs(normal.y) < 0.4) {
-        float fallRipple = sin(position.y * 3.8 - uTime * 4.6) * 0.045;
+        float fallRipple = sin(position.y * 4.0 - uTime * 4.8) * 0.05;
         transformed.z += fallRipple;
-        transformed.x += cos(position.y * 2.4 - uTime * 3.2) * 0.02;
+        transformed.x += cos(position.y * 2.6 - uTime * 3.4) * 0.022;
       }
 
       vWorldPosition = (modelMatrix * vec4(transformed, 1.0)).xyz;
@@ -218,21 +220,19 @@ export function createStylizedWaterMaterial(options?: StylizedWaterOptions): THR
       #include <color_fragment>
 
       // 1. Dual Scrolling Caustic Wave Interference
-      vec2 p1 = vWorldPosition.xz * 0.95 + vec2(uTime * 0.15, uTime * 0.11);
-      vec2 p2 = vWorldPosition.xz * 1.45 - vec2(uTime * 0.12, uTime * 0.17);
+      vec2 p1 = vWorldPosition.xz * 1.0 + vec2(uTime * 0.16, uTime * 0.12);
+      vec2 p2 = vWorldPosition.xz * 1.5 - vec2(uTime * 0.13, uTime * 0.18);
       
-      // For vertical waterfalls, scroll caustics down the Y axis
       if (abs(vLocalNormal.y) < 0.4) {
-        p1 = vec2(vWorldPosition.x * 1.2, vWorldPosition.y * 0.8 - uTime * 1.2);
-        p2 = vec2(vWorldPosition.z * 1.2, vWorldPosition.y * 1.4 - uTime * 1.8);
+        p1 = vec2(vWorldPosition.x * 1.25, vWorldPosition.y * 0.85 - uTime * 1.3);
+        p2 = vec2(vWorldPosition.z * 1.25, vWorldPosition.y * 1.45 - uTime * 1.9);
       }
 
-      float c1 = sin(p1.x * 3.2 + sin(p1.y * 2.8));
-      float c2 = cos(p2.x * 3.4 + sin(p2.y * 3.1));
+      float c1 = sin(p1.x * 3.3 + sin(p1.y * 2.9));
+      float c2 = cos(p2.x * 3.5 + sin(p2.y * 3.2));
       float caustic = c1 * c2;
       
-      // Sharp sunlit caustic cell ribbons
-      float foamPattern = smoothstep(0.38, 0.84, caustic);
+      float foamPattern = smoothstep(0.36, 0.82, caustic);
 
       // 2. Artistic 3-Stop Aquatic Depth Gradient
       float depthFactor = clamp((vWorldPosition.y + 0.6) / 1.6, 0.0, 1.0);
@@ -240,8 +240,8 @@ export function createStylizedWaterMaterial(options?: StylizedWaterOptions): THR
       waterColor = mix(waterColor, uShallowCol, smoothstep(0.5, 1.0, depthFactor));
 
       // 3. Blend in animated caustics & glistening foam crests
-      diffuseColor.rgb = mix(waterColor, uFoamCol, foamPattern * 0.48);
-      diffuseColor.a = 0.84 + foamPattern * 0.14;
+      diffuseColor.rgb = mix(waterColor, uFoamCol, foamPattern * 0.50);
+      diffuseColor.a = 0.85 + foamPattern * 0.13;
       `
     );
   };
