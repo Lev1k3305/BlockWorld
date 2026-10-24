@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    font-family: 'Rubik', 'Nunito', system-ui, -apple-system, sans-serif;
+    background-color: #080c14;
+    color: #f1f5f9;
+  }
+}
+
+.font-game {
+  font-family: 'Russo One', sans-serif;
+}
+
+.font-fun {
+  font-family: 'Rubik', 'Nunito', sans-serif;
+}
+
+.font-pixel {
+  font-family: 'Russo One', monospace;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.5);
+  border-radius: 9999px;
+}
+
+/* Touch helpers */
+.touch-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Subtle glassmorphism without backdrop blur performance hits on software-gl */
+.game-card {
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+}
+
+.game-card-hover {
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.game-card-hover:hover {
+  border-color: rgba(96, 165, 250, 0.6);
+  transform: translateY(-2px);
+}
+.game-card-hover:active {
+  transform: translateY(1px);
+}

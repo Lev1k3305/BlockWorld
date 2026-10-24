@@ -1,0 +1,6 @@
+{
+  "name": "BlockWorld: Birthday Adventure",
+  "description": "A magical voxel birthday adventure game for two heroes to restore the Heart of the Island, uncover secrets, and celebrate their special day.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
