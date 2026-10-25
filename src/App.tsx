@@ -9,6 +9,8 @@ import { PinEntryModal } from './components/journal/PinEntryModal';
 import { JournalOwner } from './types/journal';
 import { pinService } from './services/pinService';
 
+const STORAGE_KEY_OWNER = 'dva_haraktera_selected_owner';
+
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewMode>('select');
   const [activeOwner, setActiveOwner] = useState<JournalOwner | null>(null);
@@ -20,6 +22,23 @@ export default function App() {
     alizhan: false,
     dilnaz: false,
   });
+
+  // Restore saved profile on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_OWNER) as JournalOwner | null;
+      if (saved && (saved === 'alizhan' || saved === 'dilnaz')) {
+        if (!pinService.hasPin(saved)) {
+          setActiveOwner(saved);
+          setCurrentView('journal');
+        } else {
+          setPinModalOwner(saved);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to read stored owner:', e);
+    }
+  }, []);
 
   useEffect(() => {
     refreshPinMap();
@@ -35,20 +54,35 @@ export default function App() {
     } else {
       setActiveOwner(owner);
       setCurrentView('journal');
+      try {
+        localStorage.setItem(STORAGE_KEY_OWNER, owner);
+      } catch (e) {
+        console.error('Failed to save selected owner:', e);
+      }
     }
   };
 
   const handlePinSuccess = () => {
     if (pinModalOwner) {
       setActiveOwner(pinModalOwner);
+      try {
+        localStorage.setItem(STORAGE_KEY_OWNER, pinModalOwner);
+      } catch (e) {
+        console.error('Failed to save selected owner:', e);
+      }
       setPinModalOwner(null);
       setCurrentView('journal');
     }
   };
 
-  const handleExitJournal = () => {
+  const handleSwitchProfile = () => {
     setActiveOwner(null);
     setCurrentView('select');
+    try {
+      localStorage.removeItem(STORAGE_KEY_OWNER);
+    } catch (e) {
+      console.error('Failed to remove stored owner:', e);
+    }
   };
 
   return (
@@ -57,7 +91,7 @@ export default function App() {
       <Header
         currentView={currentView}
         activeOwner={activeOwner}
-        onNavigateSelect={handleExitJournal}
+        onNavigateSelect={handleSwitchProfile}
         onOpenBrotherMessage={() => setIsBrotherMessageOpen(true)}
         onOpenCommon={() => setCurrentView('common')}
         onOpenCapsule={() => setCurrentView('capsule')}
@@ -78,18 +112,22 @@ export default function App() {
         {currentView === 'journal' && activeOwner && (
           <JournalBook
             owner={activeOwner}
-            onExitJournal={handleExitJournal}
+            onExitJournal={handleSwitchProfile}
+            onOpenBrotherMessage={() => setIsBrotherMessageOpen(true)}
           />
         )}
 
         {currentView === 'common' && <CommonSection />}
 
-        {currentView === 'capsule' && <TimeCapsule />}
+        {currentView === 'capsule' && <TimeCapsule activeOwner={activeOwner} />}
       </main>
 
       {/* Modals */}
       {isBrotherMessageOpen && (
-        <BrotherMessageModal onClose={() => setIsBrotherMessageOpen(false)} />
+        <BrotherMessageModal
+          activeOwner={activeOwner}
+          onClose={() => setIsBrotherMessageOpen(false)}
+        />
       )}
 
       {pinModalOwner && (

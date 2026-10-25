@@ -16,17 +16,27 @@ import {
   Settings,
   Check,
 } from 'lucide-react';
-import { BrotherAudioRecord } from '../../types/journal';
+import { BrotherAudioRecord, JournalOwner } from '../../types/journal';
 import { journalStorage } from '../../services/journalStorage';
 
 interface BrotherMessageModalProps {
+  activeOwner?: JournalOwner | null;
   onClose: () => void;
 }
 
-export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClose }) => {
-  const [isOpenLetter, setIsOpenLetter] = useState(false);
+import { OWNER_CONFIGS } from '../../constants/questions';
+
+export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ activeOwner, onClose }) => {
+  const [selectedOwner, setSelectedOwner] = useState<JournalOwner>(activeOwner || 'alizhan');
+  const [isOpenLetter, setIsOpenLetter] = useState(true);
   const [audioRecord, setAudioRecord] = useState<BrotherAudioRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (activeOwner) {
+      setSelectedOwner(activeOwner);
+    }
+  }, [activeOwner]);
 
   // Audio player state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -165,70 +175,84 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const config = OWNER_CONFIGS[selectedOwner];
+
   return (
-    <div className="fixed inset-0 z-50 bg-stone-900/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-page-flip">
-      <div className="bg-[#fdfbf7] rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border-2 border-amber-300 relative my-8">
+    <div className="fixed inset-0 z-50 bg-stone-900/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-page-flip">
+      <div className="bg-[#fdfbf7] rounded-3xl max-w-2xl w-full p-5 sm:p-8 shadow-2xl border-2 border-amber-300/90 relative my-6 sm:my-8 max-h-[92vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-amber-100/80 hover:bg-amber-200 text-amber-900 cursor-pointer transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-full bg-amber-100/90 hover:bg-amber-200 text-amber-900 cursor-pointer transition-colors z-20 shadow-xs"
           title="Закрыть"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {!isOpenLetter ? (
-          <div className="text-center py-6 sm:py-8">
-            <div className="w-24 h-24 rounded-3xl bg-amber-100 border-2 border-amber-300/90 text-amber-900 flex items-center justify-center mx-auto mb-6 shadow-md relative rotate-[-2deg]">
-              <Mail className="w-12 h-12 text-amber-800" />
-              <div className="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-rose-500 border-2 border-white text-white flex items-center justify-center text-xs font-bold shadow-xs">
-                ❤️
-              </div>
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-200/80 text-amber-900 text-xs font-bold uppercase tracking-wider mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
-              <span>Особенный подарок</span>
-            </div>
-
-            <h2 className="font-serif-book text-3xl sm:text-4xl font-bold text-[#3d2b1f] mb-2">
-              Послание от старшего брата
-            </h2>
-
-            <p className="font-handwriting text-2xl text-[#7c5e4c] max-w-md mx-auto mb-8">
-              «От брата с любовью» • Личное голосовое аудиопоздравление для Алижана и Дильназ.
-            </p>
-
+        {/* Recipient Selection Header if opened from general view */}
+        {!activeOwner && (
+          <div className="flex items-center justify-center gap-2 mb-6 pb-4 border-b border-[#ebdcd0]">
+            <span className="text-xs font-bold text-[#8c7365] mr-1">Послание для:</span>
             <button
-              onClick={() => setIsOpenLetter(true)}
-              className="px-8 py-3.5 rounded-2xl bg-amber-800 hover:bg-amber-900 text-amber-50 font-bold text-base shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer flex items-center gap-3 mx-auto"
+              onClick={() => setSelectedOwner('alizhan')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                selectedOwner === 'alizhan'
+                  ? 'bg-sky-100 text-sky-950 border-sky-300 shadow-xs scale-102'
+                  : 'bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200'
+              }`}
             >
-              <Heart className="w-5 h-5 fill-rose-300 text-rose-300" />
-              <span>Открыть послание</span>
+              👦 Алижану
+            </button>
+            <button
+              onClick={() => setSelectedOwner('dilnaz')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                selectedOwner === 'dilnaz'
+                  ? 'bg-purple-100 text-purple-950 border-purple-300 shadow-xs scale-102'
+                  : 'bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200'
+              }`}
+            >
+              👧 Дильназ
             </button>
           </div>
-        ) : (
-          <div className="animate-page-flip">
-            <div className="text-center pb-6 border-b border-[#ebdcd0] mb-6 relative">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-900 text-xs font-bold mb-2">
-                <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-600" />
-                <span>Послание от старшего брата</span>
-              </div>
+        )}
 
-              <h2 className="font-serif-book text-3xl sm:text-4xl font-bold text-[#3d2b1f]">
-                Послание от старшего брата
-              </h2>
-
-              <p className="font-handwriting text-2xl text-[#7c5e4c] mt-1">
-                «Дорогие Алижан и Дильназ!»
-              </p>
+        {/* Letter Container */}
+        <div className="animate-page-flip">
+          {/* Header */}
+          <div className="text-center pb-5 border-b border-[#ebdcd0] mb-6 relative">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100/90 text-rose-900 text-xs font-bold mb-3 shadow-2xs border border-rose-200">
+              <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-600" />
+              <span>Послание от старшего брата ❤️</span>
             </div>
 
+            <h2 className="font-serif-book text-2xl sm:text-4xl font-bold text-[#3d2b1f] px-2">
+              {config.brotherMessageTitle}
+            </h2>
+
+            <p className="font-handwriting text-xl sm:text-2xl text-[#7c5e4c] mt-1">
+              Личное обращение от твоего старшего брата
+            </p>
+          </div>
+
+          {/* Letter Body Paper Sheet */}
+          <div className="paper-sheet rounded-2xl p-6 sm:p-8 bg-[#fefcf8] border-2 border-amber-200/80 shadow-inner mb-6 space-y-4">
+            {config.brotherMessage.split('\n\n').map((paragraph, idx) => (
+              <p
+                key={idx}
+                className="font-serif-book text-base sm:text-lg text-[#2d1f18] leading-relaxed tracking-wide"
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+
+          {/* Optional Audio Greeting Feature */}
+          <div className="pt-2">
             {isLoading ? (
-              <div className="py-12 text-center text-[#8c7365] font-serif-book">
-                Загрузка аудиозаписи...
+              <div className="py-4 text-center text-xs text-[#8c7365] font-serif-book">
+                Загрузка аудиосообщения...
               </div>
             ) : audioRecord ? (
-              <div className="bg-amber-50/80 rounded-2xl p-6 border-2 border-amber-200 shadow-inner mb-6">
+              <div className="bg-amber-50/90 rounded-2xl p-4 sm:p-5 border border-amber-200 shadow-2xs mb-4">
                 <audio
                   ref={audioRef}
                   src={audioRecord.dataUrl}
@@ -237,54 +261,52 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                   onEnded={handleEnded}
                 />
 
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center shrink-0">
-                    <Music className="w-5 h-5" />
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center shrink-0">
+                    <Music className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-serif-book text-lg font-bold text-[#3d2b1f] leading-snug">
-                      Голосовое поздравление
+                    <h4 className="font-serif-book text-base font-bold text-[#3d2b1f] leading-snug">
+                      Голосовое аудиопоздравление
                     </h4>
-                    <p className="text-xs text-[#8c7365]">
+                    <p className="text-[11px] text-[#8c7365]">
                       {audioRecord.fileName} • {formatTime(duration)}
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <input
-                      type="range"
-                      min={0}
-                      max={duration || 100}
-                      value={currentTime}
-                      onChange={handleSeek}
-                      className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer accent-amber-800"
-                    />
-                    <div className="flex items-center justify-between text-xs font-mono font-bold text-[#8c7365]">
-                      <span>{formatTime(currentTime)}</span>
-                      <span>{formatTime(duration)}</span>
-                    </div>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration || 100}
+                    value={currentTime}
+                    onChange={handleSeek}
+                    className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer accent-amber-800"
+                  />
+                  <div className="flex items-center justify-between text-[11px] font-mono font-bold text-[#8c7365]">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(duration)}</span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center justify-between pt-1">
                     <button
                       onClick={handleToggleMute}
-                      className="p-2 rounded-xl hover:bg-amber-200/80 text-amber-900 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg hover:bg-amber-200/80 text-amber-900 transition-colors cursor-pointer"
                       title={isMuted ? 'Включить звук' : 'Выключить звук'}
                     >
-                      {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                      {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                     </button>
 
                     <button
                       onClick={handleTogglePlay}
-                      className="w-14 h-14 rounded-2xl bg-amber-800 hover:bg-amber-900 text-white flex items-center justify-center shadow-md transition-transform active:scale-95 cursor-pointer"
+                      className="w-12 h-12 rounded-xl bg-amber-800 hover:bg-amber-900 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
                       title={isPlaying ? 'Пауза' : 'Воспроизвести'}
                     >
                       {isPlaying ? (
-                        <Pause className="w-7 h-7 fill-white" />
+                        <Pause className="w-6 h-6 fill-white" />
                       ) : (
-                        <Play className="w-7 h-7 fill-white ml-0.5" />
+                        <Play className="w-6 h-6 fill-white ml-0.5" />
                       )}
                     </button>
 
@@ -295,51 +317,40 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                           setCurrentTime(0);
                         }
                       }}
-                      className="p-2 rounded-xl hover:bg-amber-200/80 text-amber-900 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg hover:bg-amber-200/80 text-amber-900 transition-colors cursor-pointer"
                       title="Начать заново"
                     >
-                      <RotateCcw className="w-5 h-5" />
+                      <RotateCcw className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
               </div>
-            ) : (
-              /* Fallback exact requested phrase when no audio file present */
-              <div className="p-8 rounded-2xl bg-amber-50/60 border-2 border-dashed border-amber-300 text-center mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto mb-3 shadow-xs">
-                  <FileAudio className="w-7 h-7" />
-                </div>
-                <h3 className="font-serif-book text-2xl font-bold text-[#3d2b1f] mb-1">
-                  Здесь скоро появится особенное послание
-                </h3>
-                <p className="font-handwriting text-lg text-[#7c5e4c]">
-                  Старший брат готовит личное голосовое поздравление для Алижана и Дильназ!
-                </p>
-              </div>
-            )}
+            ) : null}
 
-            <div className="border-t border-[#ebdcd0] pt-4 flex items-center justify-between">
+            {/* Bottom Actions Bar */}
+            <div className="border-t border-[#ebdcd0] pt-4 flex items-center justify-between gap-2">
               <button
                 onClick={() => setIsAdminOpen(!isAdminOpen)}
                 className="text-xs font-bold text-[#8c7365] hover:text-amber-900 flex items-center gap-1.5 cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5" />
-                <span>{isAdminOpen ? 'Скрыть управление' : 'Загрузить / изменить аудиозапись'}</span>
+                <span>{isAdminOpen ? 'Скрыть управление' : 'Голосовая запись'}</span>
               </button>
 
               <button
-                onClick={() => setIsOpenLetter(false)}
-                className="text-xs font-bold text-amber-900 hover:underline cursor-pointer"
+                onClick={onClose}
+                className="px-5 py-2 rounded-xl bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors"
               >
-                Закрыть послание
+                Закрыть письмо
               </button>
             </div>
 
+            {/* Admin Upload Drawer */}
             {isAdminOpen && (
               <div className="mt-4 p-4 rounded-xl bg-stone-100 border border-stone-300 text-xs space-y-3 animate-page-flip">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-[#3d2b1f]">
-                    Подключить аудиофайл (MP3, M4A, WAV)
+                    Добавить голосовую аудиозапись (MP3, M4A, WAV)
                   </span>
                   {audioRecord && (
                     <button
@@ -353,7 +364,7 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                 </div>
 
                 <p className="text-[#6e584b]">
-                  Выберите запись MP3, M4A или WAV с вашего устройства:
+                  Загрузите готовую аудиозапись от старшего брата:
                 </p>
 
                 <input
@@ -389,7 +400,7 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
