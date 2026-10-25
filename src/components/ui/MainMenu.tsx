@@ -119,8 +119,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </button>
         </div>
 
-        <div className="text-[10px] text-slate-400 font-fun mt-1 bg-slate-950/60 px-3 py-0.5 rounded-full border border-white/5">
-          WASD / Джойстик — движение • Пробел — прыжок • E — действие
+        <div className="text-[10px] text-slate-300 font-fun mt-1 bg-slate-950/70 px-3.5 py-1 rounded-full border border-amber-500/20 shadow-sm backdrop-blur-sm">
+          ✨ {birthdayConfig.birthdayLabel} • WASD / Джойстик — движение • E — действие
         </div>
       </div>
 

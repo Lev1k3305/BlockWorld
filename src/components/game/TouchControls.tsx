@@ -218,7 +218,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             aria-label="Прыжок"
           >
             <ArrowUp className="w-6 h-6 stroke-[3]" />
-            <span className="text-[10px] font-black font-fun uppercase tracking-wider mt-0.5">ПРЫЖОК</span>
+            <span className="text-[10px] font-black font-fun uppercase tracking-wider mt-0.5 drop-shadow-sm">ПРЫЖОК</span>
           </button>
         </div>
       </div>
