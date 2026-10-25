@@ -60,3 +60,12 @@ export interface JournalSectionInfo {
   iconName: string;
   subtitle: string;
 }
+
+export interface BrotherAudioRecord {
+  id: 'brother_audio';
+  dataUrl: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  updatedAt: number;
+}

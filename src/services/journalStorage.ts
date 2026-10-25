@@ -1,7 +1,7 @@
-import { Answer, JournalOwner, JournalPhoto, TimeCapsuleSnapshot } from '../types/journal';
+import { Answer, BrotherAudioRecord, JournalOwner, JournalPhoto, TimeCapsuleSnapshot } from '../types/journal';
 
 const DB_NAME = 'DvaHarakteraDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 class JournalStorageService {
   private dbPromise: Promise<IDBDatabase> | null = null;
@@ -29,6 +29,10 @@ class JournalStorageService {
         if (!db.objectStoreNames.contains('snapshots')) {
           const snapshotStore = db.createObjectStore('snapshots', { keyPath: 'id' });
           snapshotStore.createIndex('owner', 'owner', { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains('audio')) {
+          db.createObjectStore('audio', { keyPath: 'id' });
         }
       };
 
@@ -191,6 +195,44 @@ class JournalStorageService {
       const tx = db.transaction('snapshots', 'readwrite');
       const store = tx.objectStore('snapshots');
       const request = store.delete(snapshotId);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // --- BROTHER AUDIO RECORD ---
+
+  async getBrotherAudio(): Promise<BrotherAudioRecord | null> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('audio', 'readonly');
+      const store = tx.objectStore('audio');
+      const request = store.get('brother_audio');
+
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveBrotherAudio(record: BrotherAudioRecord): Promise<BrotherAudioRecord> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('audio', 'readwrite');
+      const store = tx.objectStore('audio');
+      const request = store.put(record);
+
+      request.onsuccess = () => resolve(record);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async deleteBrotherAudio(): Promise<void> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('audio', 'readwrite');
+      const store = tx.objectStore('audio');
+      const request = store.delete('brother_audio');
 
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);

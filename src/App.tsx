@@ -1,20 +1,54 @@
-import React, { useState } from 'react';
-import { Header } from './components/journal/Header';
-import { HomePage } from './components/journal/HomePage';
+import React, { useState, useEffect } from 'react';
+import { Header, ViewMode } from './components/journal/Header';
+import { UserSelectionPage } from './components/journal/UserSelectionPage';
 import { JournalBook } from './components/journal/JournalBook';
 import { CommonSection } from './components/journal/CommonSection';
 import { TimeCapsule } from './components/journal/TimeCapsule';
+import { BrotherMessageModal } from './components/journal/BrotherMessageModal';
+import { PinEntryModal } from './components/journal/PinEntryModal';
 import { JournalOwner } from './types/journal';
-
-type ViewMode = 'home' | 'journal' | 'common' | 'capsule';
+import { pinService } from './services/pinService';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewMode>('home');
-  const [activeOwner, setActiveOwner] = useState<JournalOwner>('alizhan');
+  const [currentView, setCurrentView] = useState<ViewMode>('select');
+  const [activeOwner, setActiveOwner] = useState<JournalOwner | null>(null);
 
-  const handleOpenOwnerBook = (owner: JournalOwner) => {
-    setActiveOwner(owner);
-    setCurrentView('journal');
+  // Modals state
+  const [isBrotherMessageOpen, setIsBrotherMessageOpen] = useState(false);
+  const [pinModalOwner, setPinModalOwner] = useState<JournalOwner | null>(null);
+  const [hasPinMap, setHasPinMap] = useState<Record<JournalOwner, boolean>>({
+    alizhan: false,
+    dilnaz: false,
+  });
+
+  useEffect(() => {
+    refreshPinMap();
+  }, [currentView, pinModalOwner]);
+
+  const refreshPinMap = () => {
+    setHasPinMap(pinService.getHasPinMap());
+  };
+
+  const handleSelectOwner = (owner: JournalOwner) => {
+    if (pinService.hasPin(owner)) {
+      setPinModalOwner(owner);
+    } else {
+      setActiveOwner(owner);
+      setCurrentView('journal');
+    }
+  };
+
+  const handlePinSuccess = () => {
+    if (pinModalOwner) {
+      setActiveOwner(pinModalOwner);
+      setPinModalOwner(null);
+      setCurrentView('journal');
+    }
+  };
+
+  const handleExitJournal = () => {
+    setActiveOwner(null);
+    setCurrentView('select');
   };
 
   return (
@@ -23,27 +57,28 @@ export default function App() {
       <Header
         currentView={currentView}
         activeOwner={activeOwner}
-        onNavigateHome={() => setCurrentView('home')}
-        onOpenOwnerBook={handleOpenOwnerBook}
+        onNavigateSelect={handleExitJournal}
+        onOpenBrotherMessage={() => setIsBrotherMessageOpen(true)}
         onOpenCommon={() => setCurrentView('common')}
         onOpenCapsule={() => setCurrentView('capsule')}
       />
 
       {/* Main Container Views */}
       <main className="pb-12">
-        {currentView === 'home' && (
-          <HomePage
-            onOpenOwnerBook={handleOpenOwnerBook}
+        {currentView === 'select' && (
+          <UserSelectionPage
+            onSelectOwner={handleSelectOwner}
+            onOpenBrotherMessage={() => setIsBrotherMessageOpen(true)}
             onOpenCommon={() => setCurrentView('common')}
             onOpenCapsule={() => setCurrentView('capsule')}
+            hasPinMap={hasPinMap}
           />
         )}
 
-        {currentView === 'journal' && (
+        {currentView === 'journal' && activeOwner && (
           <JournalBook
             owner={activeOwner}
-            onSwitchOwner={(nextOwner) => setActiveOwner(nextOwner)}
-            onNavigateHome={() => setCurrentView('home')}
+            onExitJournal={handleExitJournal}
           />
         )}
 
@@ -51,6 +86,19 @@ export default function App() {
 
         {currentView === 'capsule' && <TimeCapsule />}
       </main>
+
+      {/* Modals */}
+      {isBrotherMessageOpen && (
+        <BrotherMessageModal onClose={() => setIsBrotherMessageOpen(false)} />
+      )}
+
+      {pinModalOwner && (
+        <PinEntryModal
+          owner={pinModalOwner}
+          onSuccess={handlePinSuccess}
+          onCancel={() => setPinModalOwner(null)}
+        />
+      )}
 
       {/* Footer */}
       <footer className="border-t border-[#ebdcd0] py-6 text-center text-xs text-[#8c7365] bg-[#fbf8f3]">
@@ -63,4 +111,4 @@ export default function App() {
       </footer>
     </div>
   );
-};
+}

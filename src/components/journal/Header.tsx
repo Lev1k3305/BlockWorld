@@ -1,13 +1,15 @@
 import React from 'react';
-import { BookOpen, Sparkles, Clock, Heart, Home } from 'lucide-react';
+import { BookOpen, Clock, Heart, LogOut, Mail, Sparkles } from 'lucide-react';
 import { JournalOwner } from '../../types/journal';
 import { OWNER_CONFIGS } from '../../constants/questions';
 
+export type ViewMode = 'select' | 'journal' | 'common' | 'capsule';
+
 interface HeaderProps {
-  currentView: 'home' | 'journal' | 'common' | 'capsule';
-  activeOwner?: JournalOwner;
-  onNavigateHome: () => void;
-  onOpenOwnerBook: (owner: JournalOwner) => void;
+  currentView: ViewMode;
+  activeOwner?: JournalOwner | null;
+  onNavigateSelect: () => void;
+  onOpenBrotherMessage: () => void;
   onOpenCommon: () => void;
   onOpenCapsule: () => void;
 }
@@ -15,20 +17,22 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentView,
   activeOwner,
-  onNavigateHome,
-  onOpenOwnerBook,
+  onNavigateSelect,
+  onOpenBrotherMessage,
   onOpenCommon,
   onOpenCapsule,
 }) => {
+  const activeConfig = activeOwner ? OWNER_CONFIGS[activeOwner] : null;
+
   return (
-    <header className="sticky top-0 z-30 bg-[#fbf8f3]/90 backdrop-blur-md border-b border-[#ebdcd0] shadow-xs px-4 py-3">
+    <header className="sticky top-0 z-30 bg-[#fbf8f3]/95 backdrop-blur-md border-b border-[#ebdcd0] shadow-xs px-4 py-3">
       <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Brand Logo & Home Button */}
+        {/* Brand Logo & Selection Screen Navigation */}
         <button
-          onClick={onNavigateHome}
-          className="flex items-center gap-2 text-left group cursor-pointer transition-transform active:scale-98"
+          onClick={onNavigateSelect}
+          className="flex items-center gap-2.5 text-left group cursor-pointer transition-transform active:scale-98"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300/60 flex items-center justify-center text-amber-800 shadow-xs group-hover:rotate-[-3deg] transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300/80 flex items-center justify-center text-amber-800 shadow-xs group-hover:rotate-[-3deg] transition-transform">
             <BookOpen className="w-5 h-5" />
           </div>
           <div>
@@ -36,53 +40,39 @@ export const Header: React.FC<HeaderProps> = ({
               Два характера
             </h1>
             <p className="font-handwriting text-sm text-[#8c7365] -mt-0.5">
-              Семейная капсула времени
+              Семейный журнал
             </p>
           </div>
         </button>
 
+        {/* Current Active Journal Status (When inside a personal journal) */}
+        {currentView === 'journal' && activeConfig && (
+          <div className="hidden md:flex items-center gap-2 px-3.5 py-1 rounded-full border text-xs font-bold shadow-2xs"
+               style={{
+                 backgroundColor: activeConfig.badgeBg,
+                 borderColor: activeConfig.borderAccent,
+                 color: activeConfig.primaryTextColor,
+               }}>
+            <span className="text-sm">{activeConfig.avatarEmoji}</span>
+            <span>Журнал {activeConfig.name}</span>
+          </div>
+        )}
+
         {/* Navigation Quick Links */}
         <nav className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-          {currentView !== 'home' && (
-            <button
-              onClick={onNavigateHome}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-[#5c473a] hover:bg-amber-100/60 transition-colors cursor-pointer"
-            >
-              <Home className="w-4 h-4 text-amber-700" />
-              <span>Главная</span>
-            </button>
-          )}
-
-          {/* Alizhan Book Button */}
+          {/* Brother's Message Shared Entry */}
           <button
-            onClick={() => onOpenOwnerBook('alizhan')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
-              currentView === 'journal' && activeOwner === 'alizhan'
-                ? 'bg-[#fcece6] text-[#c05638] border border-[#f2beaf] shadow-xs'
-                : 'text-[#6e584b] hover:bg-[#fcece6]/60'
-            }`}
+            onClick={onOpenBrotherMessage}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-100/90 text-amber-900 border border-amber-300 hover:bg-amber-200 transition-colors cursor-pointer shadow-2xs"
           >
-            <span className="text-base">{OWNER_CONFIGS.alizhan.avatarEmoji}</span>
-            <span>Книга Алижан</span>
-          </button>
-
-          {/* Dilnaz Book Button */}
-          <button
-            onClick={() => onOpenOwnerBook('dilnaz')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
-              currentView === 'journal' && activeOwner === 'dilnaz'
-                ? 'bg-[#f0ecfd] text-[#6b4ebd] border border-[#c9bbf2] shadow-xs'
-                : 'text-[#6e584b] hover:bg-[#f0ecfd]/60'
-            }`}
-          >
-            <span className="text-base">{OWNER_CONFIGS.dilnaz.avatarEmoji}</span>
-            <span>Книга Дильназ</span>
+            <Mail className="w-4 h-4 text-amber-800" />
+            <span>Послание от брата</span>
           </button>
 
           {/* Common Section Button */}
           <button
             onClick={onOpenCommon}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               currentView === 'common'
                 ? 'bg-rose-100 text-rose-800 border border-rose-300 shadow-xs'
                 : 'text-[#6e584b] hover:bg-rose-50'
@@ -96,7 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Time Capsule Button */}
           <button
             onClick={onOpenCapsule}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               currentView === 'capsule'
                 ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-xs'
                 : 'text-[#6e584b] hover:bg-amber-50'
@@ -106,6 +96,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden sm:inline">Капсула времени</span>
             <span className="sm:hidden">Капсула</span>
           </button>
+
+          {/* Exit Journal Button (Shown when logged into a profile or viewing non-selection view) */}
+          {currentView !== 'select' && (
+            <button
+              onClick={onNavigateSelect}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-300/80 transition-all cursor-pointer shadow-2xs"
+              title="Выйти из текущего журнала на экран выбора"
+            >
+              <LogOut className="w-4 h-4 text-stone-600" />
+              <span>Выйти из журнала</span>
+            </button>
+          )}
         </nav>
       </div>
     </header>

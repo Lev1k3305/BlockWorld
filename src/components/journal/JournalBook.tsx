@@ -2,31 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { JournalOwner, JournalSectionId, Answer } from '../../types/journal';
 import { JOURNAL_SECTIONS, JOURNAL_QUESTIONS, OWNER_CONFIGS } from '../../constants/questions';
 import { journalStorage } from '../../services/journalStorage';
+import { pinService } from '../../services/pinService';
 import { QuestionSectionPage } from './QuestionSectionPage';
 import { PhotosSection } from './PhotosSection';
-import { BookOpen, User, Heart, Sparkles, Compass, Image, ArrowRight, ArrowLeft } from 'lucide-react';
+import { BookOpen, User, Heart, Sparkles, Compass, Image, LogOut, Lock, Key, Check, X, ShieldCheck } from 'lucide-react';
 
 interface JournalBookProps {
   owner: JournalOwner;
-  onSwitchOwner: (nextOwner: JournalOwner) => void;
-  onNavigateHome: () => void;
+  onExitJournal: () => void;
 }
 
 export const JournalBook: React.FC<JournalBookProps> = ({
   owner,
-  onSwitchOwner,
-  onNavigateHome,
+  onExitJournal,
 }) => {
   const config = OWNER_CONFIGS[owner];
-  const otherOwner: JournalOwner = owner === 'alizhan' ? 'dilnaz' : 'alizhan';
-  const otherConfig = OWNER_CONFIGS[otherOwner];
 
   const [activeSection, setActiveSection] = useState<JournalSectionId>('about');
   const [answersMap, setAnswersMap] = useState<Record<string, Answer>>({});
   const [isLoading, setIsLoading] = useState(true);
 
+  // PIN settings modal state
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [hasExistingPin, setHasExistingPin] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [pinMessage, setPinMessage] = useState<string | null>(null);
+
   useEffect(() => {
     loadAnswers();
+    setHasExistingPin(pinService.hasPin(owner));
   }, [owner]);
 
   const loadAnswers = async () => {
@@ -84,6 +89,36 @@ export const JournalBook: React.FC<JournalBookProps> = ({
     }
   };
 
+  // PIN Settings Modal Handlers
+  const handleSavePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinMessage(null);
+
+    if (pinInput.length < 4) {
+      setPinMessage('PIN-код должен состоять минимум из 4 символов/цифр.');
+      return;
+    }
+
+    if (pinInput !== pinConfirm) {
+      setPinMessage('Введённые PIN-коды не совпадают.');
+      return;
+    }
+
+    await pinService.setPin(owner, pinInput);
+    setHasExistingPin(true);
+    setIsPinModalOpen(false);
+    setPinInput('');
+    setPinConfirm('');
+  };
+
+  const handleRemovePin = () => {
+    pinService.removePin(owner);
+    setHasExistingPin(false);
+    setIsPinModalOpen(false);
+    setPinInput('');
+    setPinConfirm('');
+  };
+
   // Calculate total journal progress
   const totalQuestions = JOURNAL_QUESTIONS.length;
   const filledQuestions = JOURNAL_QUESTIONS.filter((q) => {
@@ -109,7 +144,7 @@ export const JournalBook: React.FC<JournalBookProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 md:py-8">
-      {/* Top Banner: Journal Title & Switch Sister Toggle */}
+      {/* Top Banner: Personal Journal Title & Actions */}
       <div
         className="rounded-2xl p-6 mb-6 shadow-sm border-2 relative flex flex-wrap items-center justify-between gap-4"
         style={{
@@ -119,42 +154,51 @@ export const JournalBook: React.FC<JournalBookProps> = ({
       >
         <div className="flex items-center gap-4">
           <div
-            className="w-16 h-16 rounded-2xl border-2 flex items-center justify-center text-4xl shadow-xs"
+            className="w-16 h-16 rounded-2xl border-2 flex items-center justify-center text-4xl shadow-xs shrink-0"
             style={{ backgroundColor: config.badgeBg, borderColor: config.borderAccent }}
           >
             {config.avatarEmoji}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
                     style={{ backgroundColor: config.badgeBg, color: config.primaryTextColor }}>
                 {config.role}
               </span>
               <span className="text-xs font-semibold text-[#8c7365]">
-                Прогресс: {filledQuestions}/{totalQuestions}
+                Заполнено: {filledQuestions}/{totalQuestions}
               </span>
             </div>
             <h1 className="font-serif-book text-3xl sm:text-4xl font-bold mt-1"
                 style={{ color: config.primaryTextColor }}>
-              Интерактивный журнал {config.name}
+              Личная книга {config.name}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Switch to sister's journal button */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* PIN Settings Button */}
           <button
-            onClick={() => onSwitchOwner(otherOwner)}
-            className="px-4 py-2.5 rounded-xl border text-xs sm:text-sm font-bold flex items-center gap-2 transition-transform hover:scale-102 active:scale-98 cursor-pointer shadow-2xs"
-            style={{
-              backgroundColor: otherConfig.cardBg,
-              borderColor: otherConfig.borderAccent,
-              color: otherConfig.primaryTextColor,
+            onClick={() => {
+              setPinMessage(null);
+              setPinInput('');
+              setPinConfirm('');
+              setIsPinModalOpen(true);
             }}
+            className="px-3.5 py-2 rounded-xl bg-white/90 hover:bg-white text-stone-700 border border-stone-300/80 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+            title="Настройка PIN-кода для журнала"
           >
-            <span>{otherConfig.avatarEmoji}</span>
-            <span>Открыть журнал {otherConfig.name}</span>
-            <ArrowRight className="w-4 h-4" />
+            <Lock className="w-4 h-4 text-amber-700" />
+            <span>{hasExistingPin ? 'Изменить PIN' : 'Установить PIN'}</span>
+          </button>
+
+          {/* Exit Journal Button */}
+          <button
+            onClick={onExitJournal}
+            className="px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-900 text-stone-100 text-xs sm:text-sm font-bold flex items-center gap-2 transition-transform active:scale-98 cursor-pointer shadow-xs"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Выйти из журнала</span>
           </button>
         </div>
       </div>
@@ -211,6 +255,101 @@ export const JournalBook: React.FC<JournalBookProps> = ({
           onSaveAnswer={handleSaveAnswer}
           onDeleteAnswer={handleDeleteAnswer}
         />
+      )}
+
+      {/* Modal: Set/Change Local PIN */}
+      {isPinModalOpen && (
+        <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-page-flip">
+          <div className="bg-[#fdfbf7] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#ebdcd0] relative">
+            <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-[#ebdcd0]">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <Key className="w-4 h-4" />
+                </div>
+                <h3 className="font-serif-book text-xl font-bold text-[#3d2b1f]">
+                  PIN-код для журнала {config.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPinModalOpen(false)}
+                className="p-1 rounded-full hover:bg-stone-200 text-stone-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-[#7c5e4c] mb-4 leading-relaxed">
+              Установите 4-значный код для защиты входа в этот журнал на данном устройстве. Код сохраняется локально в зашифрованном виде (SHA-256).
+            </p>
+
+            <form onSubmit={handleSavePin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[#5c473a] uppercase tracking-wider mb-1">
+                  Новый PIN-код
+                </label>
+                <input
+                  type="password"
+                  maxLength={8}
+                  required
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  placeholder="Введите PIN (например: 1234)"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#ebdcd0] bg-white text-sm text-[#3d2b1f] focus:outline-none tracking-widest font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#5c473a] uppercase tracking-wider mb-1">
+                  Повторите PIN-код
+                </label>
+                <input
+                  type="password"
+                  maxLength={8}
+                  required
+                  value={pinConfirm}
+                  onChange={(e) => setPinConfirm(e.target.value)}
+                  placeholder="Повторите PIN..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#ebdcd0] bg-white text-sm text-[#3d2b1f] focus:outline-none tracking-widest font-mono"
+                />
+              </div>
+
+              {pinMessage && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
+                  {pinMessage}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-3 border-t border-[#ebdcd0]">
+                {hasExistingPin ? (
+                  <button
+                    type="button"
+                    onClick={handleRemovePin}
+                    className="text-xs font-bold text-rose-600 hover:text-rose-800 underline cursor-pointer"
+                  >
+                    Снять защиту
+                  </button>
+                ) : <div />}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPinModalOpen(false)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#8c7365] hover:bg-stone-100 cursor-pointer"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-amber-800 text-white font-bold text-xs shadow-xs hover:bg-amber-900 cursor-pointer"
+                  >
+                    Сохранить PIN
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
