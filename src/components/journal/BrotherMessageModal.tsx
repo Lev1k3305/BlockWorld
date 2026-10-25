@@ -28,13 +28,13 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
   const [audioRecord, setAudioRecord] = useState<BrotherAudioRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Audio Player State
+  // Audio player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
 
-  // Admin Upload State
+  // Admin upload state
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -101,7 +101,6 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
     }
   };
 
-  // Upload Audio File
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -109,12 +108,11 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
     setUploadError(null);
     setUploadSuccess(null);
 
-    // Validate extension/type (MP3, M4A, WAV)
     const validExtensions = ['mp3', 'm4a', 'wav'];
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
 
     if (!validExtensions.includes(ext) && !file.type.startsWith('audio/')) {
-      setUploadError('Пожалуйста, выберите аудиофайл формата MP3, M4A или WAV.');
+      setUploadError('Пожалуйста, выберите файл формата MP3, M4A или WAV.');
       return;
     }
 
@@ -141,14 +139,14 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
       reader.readAsDataURL(file);
     } catch (err) {
       console.error('Failed to upload audio:', err);
-      setUploadError('Не удалось сохранить файл. Попробуйте ещё раз.');
+      setUploadError('Не удалось сохранить файл.');
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDeleteAudio = async () => {
-    if (!window.confirm('Удалить голосовое поздравление?')) return;
+    if (!window.confirm('Удалить аудиозапись старшего брата?')) return;
     try {
       await journalStorage.deleteBrotherAudio();
       setAudioRecord(null);
@@ -170,7 +168,6 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
   return (
     <div className="fixed inset-0 z-50 bg-stone-900/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-page-flip">
       <div className="bg-[#fdfbf7] rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border-2 border-amber-300 relative my-8">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full bg-amber-100/80 hover:bg-amber-200 text-amber-900 cursor-pointer transition-colors"
@@ -179,10 +176,8 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
           <X className="w-5 h-5" />
         </button>
 
-        {/* View 1: Sealed Letter Envelope */}
         {!isOpenLetter ? (
           <div className="text-center py-6 sm:py-8">
-            {/* Vintage Envelope Icon Accent */}
             <div className="w-24 h-24 rounded-3xl bg-amber-100 border-2 border-amber-300/90 text-amber-900 flex items-center justify-center mx-auto mb-6 shadow-md relative rotate-[-2deg]">
               <Mail className="w-12 h-12 text-amber-800" />
               <div className="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-rose-500 border-2 border-white text-white flex items-center justify-center text-xs font-bold shadow-xs">
@@ -192,15 +187,15 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
 
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-200/80 text-amber-900 text-xs font-bold uppercase tracking-wider mb-3">
               <Sparkles className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
-              <span>Семейное послание</span>
+              <span>Особенный подарок</span>
             </div>
 
             <h2 className="font-serif-book text-3xl sm:text-4xl font-bold text-[#3d2b1f] mb-2">
-              От брата с любовью
+              Послание от старшего брата
             </h2>
 
             <p className="font-handwriting text-2xl text-[#7c5e4c] max-w-md mx-auto mb-8">
-              Особенное личное голосовое поздравление для Алижан и Дильназ.
+              «От брата с любовью» • Личное голосовое аудиопоздравление для Алижана и Дильназ.
             </p>
 
             <button
@@ -208,21 +203,19 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
               className="px-8 py-3.5 rounded-2xl bg-amber-800 hover:bg-amber-900 text-amber-50 font-bold text-base shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer flex items-center gap-3 mx-auto"
             >
               <Heart className="w-5 h-5 fill-rose-300 text-rose-300" />
-              <span>Открыть письмо с поздравлением</span>
+              <span>Открыть послание</span>
             </button>
           </div>
         ) : (
-          /* View 2: Unsealed Letter & Audio Player */
           <div className="animate-page-flip">
-            {/* Letter Header */}
             <div className="text-center pb-6 border-b border-[#ebdcd0] mb-6 relative">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-900 text-xs font-bold mb-2">
                 <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-600" />
-                <span>Общий подарок для обеих сестёр</span>
+                <span>Послание от старшего брата</span>
               </div>
 
               <h2 className="font-serif-book text-3xl sm:text-4xl font-bold text-[#3d2b1f]">
-                От брата с любовью
+                Послание от старшего брата
               </h2>
 
               <p className="font-handwriting text-2xl text-[#7c5e4c] mt-1">
@@ -230,13 +223,11 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
               </p>
             </div>
 
-            {/* Audio Content Area */}
             {isLoading ? (
               <div className="py-12 text-center text-[#8c7365] font-serif-book">
                 Загрузка аудиозаписи...
               </div>
             ) : audioRecord ? (
-              /* REAL AUDIO PLAYER AVAILABLE */
               <div className="bg-amber-50/80 rounded-2xl p-6 border-2 border-amber-200 shadow-inner mb-6">
                 <audio
                   ref={audioRef}
@@ -260,9 +251,7 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                   </div>
                 </div>
 
-                {/* Main Player Controls */}
                 <div className="space-y-3">
-                  {/* Progress Seeking Timeline Bar */}
                   <div className="space-y-1">
                     <input
                       type="range"
@@ -278,7 +267,6 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                     </div>
                   </div>
 
-                  {/* Buttons Toolbar */}
                   <div className="flex items-center justify-between pt-2">
                     <button
                       onClick={handleToggleMute}
@@ -288,7 +276,6 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                       {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                     </button>
 
-                    {/* Big Play/Pause Button */}
                     <button
                       onClick={handleTogglePlay}
                       className="w-14 h-14 rounded-2xl bg-amber-800 hover:bg-amber-900 text-white flex items-center justify-center shadow-md transition-transform active:scale-95 cursor-pointer"
@@ -317,7 +304,7 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                 </div>
               </div>
             ) : (
-              /* EMPTY STATE: NO AUDIO UPLOADED YET */
+              /* Fallback exact requested phrase when no audio file present */
               <div className="p-8 rounded-2xl bg-amber-50/60 border-2 border-dashed border-amber-300 text-center mb-6">
                 <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto mb-3 shadow-xs">
                   <FileAudio className="w-7 h-7" />
@@ -326,35 +313,33 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                   Здесь скоро появится особенное послание
                 </h3>
                 <p className="font-handwriting text-lg text-[#7c5e4c]">
-                  Старший брат заходит, чтобы загрузить личное аудиопоздравление!
+                  Старший брат готовит личное голосовое поздравление для Алижана и Дильназ!
                 </p>
               </div>
             )}
 
-            {/* Admin Audio Upload & Management Toggle */}
             <div className="border-t border-[#ebdcd0] pt-4 flex items-center justify-between">
               <button
                 onClick={() => setIsAdminOpen(!isAdminOpen)}
                 className="text-xs font-bold text-[#8c7365] hover:text-amber-900 flex items-center gap-1.5 cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5" />
-                <span>{isAdminOpen ? 'Скрыть управление' : 'Загрузить / изменить аудиофайл'}</span>
+                <span>{isAdminOpen ? 'Скрыть управление' : 'Загрузить / изменить аудиозапись'}</span>
               </button>
 
               <button
                 onClick={() => setIsOpenLetter(false)}
                 className="text-xs font-bold text-amber-900 hover:underline cursor-pointer"
               >
-                Закрыть письмо
+                Закрыть послание
               </button>
             </div>
 
-            {/* Admin Management Section */}
             {isAdminOpen && (
               <div className="mt-4 p-4 rounded-xl bg-stone-100 border border-stone-300 text-xs space-y-3 animate-page-flip">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-[#3d2b1f]">
-                    Загрузка аудиофайла (MP3, M4A, WAV)
+                    Подключить аудиофайл (MP3, M4A, WAV)
                   </span>
                   {audioRecord && (
                     <button
@@ -368,7 +353,7 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                 </div>
 
                 <p className="text-[#6e584b]">
-                  Выберите записанный файл с вашего компьютера или телефона:
+                  Выберите запись MP3, M4A или WAV с вашего устройства:
                 </p>
 
                 <input
@@ -386,7 +371,7 @@ export const BrotherMessageModal: React.FC<BrotherMessageModalProps> = ({ onClos
                   className="w-full py-2.5 rounded-xl bg-amber-800 hover:bg-amber-900 text-white font-bold flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>{isUploading ? 'Загрузка файла...' : 'Выбрать файл и загрузить'}</span>
+                  <span>{isUploading ? 'Загрузка...' : 'Выбрать аудиофайл'}</span>
                 </button>
 
                 {uploadError && (
