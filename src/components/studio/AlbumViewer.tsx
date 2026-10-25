@@ -149,14 +149,31 @@ export const AlbumViewer: React.FC<AlbumViewerProps> = ({
 
       {/* Main Digital Photobook Viewer */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 my-8 flex-1 flex flex-col items-center justify-center w-full">
-        {pages.length === 0 ? (
+        {photos.length === 0 ? (
+          <div className="bg-white/80 border-2 border-dashed border-stone-200 rounded-3xl p-10 text-center max-w-md shadow-xs my-8">
+            <BookOpen className="w-12 h-12 text-amber-800/50 mx-auto mb-3" />
+            <h3 className="text-lg font-serif font-bold text-stone-800 mb-2">
+              В этом альбоме пока нет фотографий
+            </h3>
+            <p className="text-xs text-stone-500 mb-6">
+              Нажмите кнопку ниже, чтобы открыть редактор и добавить ваши первые снимки и воспоминания!
+            </p>
+            <button
+              onClick={onEdit}
+              className="px-5 py-2.5 bg-amber-900 hover:bg-amber-950 text-amber-50 font-semibold text-xs rounded-xl shadow-md transition-all active:scale-95 inline-flex items-center gap-2"
+            >
+              <Edit3 className="w-4 h-4" />
+              Добавить фотографии
+            </button>
+          </div>
+        ) : pages.length === 0 ? (
           <div className="bg-white rounded-3xl p-10 text-center max-w-md shadow-md border border-stone-200">
             <BookOpen className="w-12 h-12 text-stone-400 mx-auto mb-3" />
             <h3 className="text-lg font-serif font-bold text-stone-800 mb-2">
-              В альбоме нет страниц
+              В альбоме нет верстки страниц
             </h3>
             <p className="text-xs text-stone-500 mb-6">
-              Перейдите в редактор, чтобы добавить фотографии и создать первые страницы.
+              Перейдите в редактор, чтобы оформить фотографии на страницах.
             </p>
             <button
               onClick={onEdit}

@@ -24,7 +24,7 @@ export default function App() {
 
   const initApp = async () => {
     try {
-      await albumStorage.seedDefaultAlbumsIfNeeded();
+      await albumStorage.clearDemoSeedDataIfNeeded();
     } catch (err) {
       console.error('Error initializing DB:', err);
     } finally {
@@ -45,6 +45,7 @@ export default function App() {
   const handleSaveAlbum = async (albumData: Partial<Album>, coverFile?: File) => {
     const now = Date.now();
     let coverPhotoId = albumData.coverPhotoId;
+    const albumId = albumData.id || `album-${Date.now()}`;
 
     // Handle new cover file if uploaded in modal
     if (coverFile) {
@@ -55,7 +56,6 @@ export default function App() {
       });
 
       const photoId = `cover-${Date.now()}`;
-      const albumId = albumData.id || `album-${Date.now()}`;
 
       await albumStorage.savePhoto({
         id: photoId,
@@ -70,7 +70,7 @@ export default function App() {
     }
 
     const albumToSave: Album = {
-      id: albumData.id || `album-${Date.now()}`,
+      id: albumId,
       owner: albumData.owner || activeOwner,
       title: albumData.title || 'Новый альбом',
       description: albumData.description || '',

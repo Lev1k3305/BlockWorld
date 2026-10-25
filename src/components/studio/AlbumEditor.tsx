@@ -58,6 +58,7 @@ export const AlbumEditor: React.FC<AlbumEditorProps> = ({
   const [draggedPhotoIdx, setDraggedPhotoIdx] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -94,16 +95,32 @@ export const AlbumEditor: React.FC<AlbumEditorProps> = ({
 
   // --- PHOTO UPLOAD ---
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragOverArea, setIsDragOverArea] = useState(false);
 
+  const processFiles = async (filesList: FileList | File[]) => {
+    if (!filesList || filesList.length === 0) return;
+
+    setUploadError(null);
     setIsUploading(true);
     const newPhotos: Photo[] = [];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    const maxSizeBytes = 20 * 1024 * 1024; // 20 MB
 
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      for (let i = 0; i < filesList.length; i++) {
+        const file = filesList[i];
+
+        if (!allowedTypes.includes(file.type.toLowerCase()) && !/\.(jpg|jpeg|png|webp)$/i.test(file.name)) {
+          setUploadError(`Файл "${file.name}" имеет неподдерживаемый формат. Используйте JPG, PNG или WebP.`);
+          continue;
+        }
+
+        if (file.size > maxSizeBytes) {
+          setUploadError(`Файл "${file.name}" слишком большой (более 20 МБ).`);
+          continue;
+        }
+
         const dataUrl = await readFileAsDataUrl(file);
 
         const newPhoto: Photo = {
@@ -121,36 +138,76 @@ export const AlbumEditor: React.FC<AlbumEditorProps> = ({
         newPhotos.push(newPhoto);
       }
 
-      const updatedPhotos = [...photos, ...newPhotos];
-      setPhotos(updatedPhotos);
+      if (newPhotos.length > 0) {
+        const updatedPhotos = [...photos, ...newPhotos];
+        setPhotos(updatedPhotos);
 
-      // If album has no cover photo, set first new photo as cover
-      if (album && !album.coverPhotoId && newPhotos.length > 0) {
-        const updatedAlbum = { ...album, coverPhotoId: newPhotos[0].id, updatedAt: Date.now() };
-        await albumStorage.saveAlbum(updatedAlbum);
-        setAlbum(updatedAlbum);
-      }
-
-      // Add newly uploaded photos to current page if empty or fits
-      if (pages.length > 0) {
-        const currentPage = pages[activePageIdx] || pages[0];
-        if (currentPage.photoIds.length < 3) {
-          const addedIds = newPhotos.map((p) => p.id);
-          const updatedPage = {
-            ...currentPage,
-            photoIds: [...currentPage.photoIds, ...addedIds].slice(0, 3),
-          };
-          updatePageInState(updatedPage);
+        // If album has no cover photo, set first new photo as cover
+        if (album && !album.coverPhotoId) {
+          const updatedAlbum = { ...album, coverPhotoId: newPhotos[0].id, updatedAt: Date.now() };
+          await albumStorage.saveAlbum(updatedAlbum);
+          setAlbum(updatedAlbum);
         }
-      }
 
-      showSaveStatus('Фотографии успешно загружены!');
+        // Add newly uploaded photos to current page or create a page if needed
+        if (pages.length === 0) {
+          const newPage: AlbumPage = {
+            id: `page-${Date.now()}`,
+            albumId,
+            pageNumber: 1,
+            layout: 'grid-2',
+            photoIds: newPhotos.map((p) => p.id).slice(0, 3),
+            title: album?.title || 'Страница 1',
+            storyText: '',
+            stickers: [],
+          };
+          setPages([newPage]);
+          await albumStorage.savePage(newPage);
+        } else {
+          const currentPage = pages[activePageIdx] || pages[0];
+          if (currentPage.photoIds.length < 3) {
+            const addedIds = newPhotos.map((p) => p.id);
+            const updatedPage = {
+              ...currentPage,
+              photoIds: [...currentPage.photoIds, ...addedIds].slice(0, 3),
+            };
+            updatePageInState(updatedPage);
+          }
+        }
+
+        showSaveStatus('Фотографии успешно загружены!');
+      }
     } catch (err) {
       console.error('Error uploading files:', err);
+      setUploadError('Произошла ошибка при загрузке файлов.');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      processFiles(e.target.files);
+    }
+  };
+
+  const handleDropArea = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOverArea(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleDragOverArea = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOverArea(true);
+  };
+
+  const handleDragLeaveArea = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOverArea(false);
   };
 
   const readFileAsDataUrl = (file: File): Promise<string> => {
@@ -374,6 +431,40 @@ export const AlbumEditor: React.FC<AlbumEditorProps> = ({
         </div>
       </div>
 
+      {/* Fullscreen Photo Lightbox Modal */}
+      {previewPhoto && (
+        <div className="fixed inset-0 z-50 bg-stone-950/90 backdrop-blur-md flex items-center justify-center p-4">
+          <button
+            onClick={() => setPreviewPhoto(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-stone-800 text-stone-300 hover:text-white flex items-center justify-center transition-colors"
+          >
+            ✕
+          </button>
+          <div className="max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center space-y-3">
+            <img
+              src={previewPhoto.dataUrl}
+              alt={previewPhoto.caption || ''}
+              className="max-h-[75vh] w-auto object-contain rounded-2xl shadow-2xl border border-stone-800"
+            />
+            {previewPhoto.caption && (
+              <p className="text-stone-200 text-sm font-serif text-center font-semibold">
+                {previewPhoto.caption}
+              </p>
+            )}
+            {previewPhoto.date && (
+              <p className="text-stone-400 text-xs">
+                {previewPhoto.date}
+              </p>
+            )}
+            {previewPhoto.memoryNote && (
+              <p className="text-stone-300 text-xs italic text-center max-w-md">
+                «{previewPhoto.memoryNote}»
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-6">
         {/* Editor Tabs Navigation */}
@@ -425,23 +516,39 @@ export const AlbumEditor: React.FC<AlbumEditorProps> = ({
           </div>
         </div>
 
+        {uploadError && (
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-center justify-between">
+            <span>⚠️ {uploadError}</span>
+            <button onClick={() => setUploadError(null)} className="text-rose-500 hover:text-rose-800 font-bold ml-2">✕</button>
+          </div>
+        )}
+
         {/* TAB 1: PHOTOS GALLERY & DRAG REORDERING */}
         {activeTab === 'photos' && (
-          <div className="space-y-6">
+          <div
+            onDragOver={handleDragOverArea}
+            onDragLeave={handleDragLeaveArea}
+            onDrop={handleDropArea}
+            className={`space-y-6 rounded-3xl transition-all ${
+              isDragOverArea ? 'ring-4 ring-amber-500/50 bg-amber-50/50 p-2' : ''
+            }`}
+          >
             <div className="bg-amber-900/5 border border-amber-900/10 rounded-2xl p-4 text-xs text-amber-950 flex items-center justify-between">
               <span>
-                💡 <strong>Совет:</strong> Перетаскивайте фотографии мышкой или па пальце для изменения их порядка, а также добавляйте подписи и воспоминания.
+                💡 <strong>Совет:</strong> Перетащите сюда файлы (Drag & Drop) или выберите их кнопкой выше. Поддерживаются JPG, PNG и WebP.
               </span>
             </div>
 
             {photos.length === 0 ? (
-              <div className="bg-white border-2 border-dashed border-stone-200 rounded-3xl p-10 text-center">
+              <div className={`bg-white border-2 border-dashed rounded-3xl p-10 text-center transition-colors ${
+                isDragOverArea ? 'border-amber-500 bg-amber-50' : 'border-stone-200'
+              }`}>
                 <ImageIcon className="w-12 h-12 text-stone-400 mx-auto mb-3" />
                 <h3 className="text-base font-serif font-bold text-stone-800 mb-1">
                   Фотографии ещё не добавлены
                 </h3>
                 <p className="text-xs text-stone-500 mb-4">
-                  Загрузите свои любимые снимки с компьютера или телефона.
+                  Загрузите свои любимые снимки с компьютера или телефона или просто перетащите их сюда.
                 </p>
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -493,12 +600,19 @@ export const AlbumEditor: React.FC<AlbumEditorProps> = ({
                     </div>
 
                     {/* Image Preview Thumbnail */}
-                    <div className="w-28 h-28 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 relative">
+                    <div
+                      onClick={() => setPreviewPhoto(photo)}
+                      className="w-28 h-28 rounded-xl bg-stone-100 border border-stone-200 overflow-hidden shrink-0 relative cursor-pointer group/img"
+                      title="Кликните для полноэкранного просмотра"
+                    >
                       <img
                         src={photo.dataUrl}
                         alt={photo.caption || 'Фотография'}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover/img:scale-105 transition-transform"
                       />
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                        <Eye className="w-5 h-5 text-white drop-shadow-md" />
+                      </div>
                     </div>
 
                     {/* Photo Details Form */}
