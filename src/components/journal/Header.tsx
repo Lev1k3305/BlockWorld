@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Clock, Heart, LogOut, Mail, Sparkles } from 'lucide-react';
+import { BookOpen, Clock, Heart, LogOut, Mail } from 'lucide-react';
 import { JournalOwner } from '../../types/journal';
 import { OWNER_CONFIGS } from '../../constants/questions';
 
@@ -45,14 +45,16 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </button>
 
-        {/* Current Active Journal Status (When inside a personal journal) */}
+        {/* Current Active Journal Status */}
         {currentView === 'journal' && activeConfig && (
-          <div className="hidden md:flex items-center gap-2 px-3.5 py-1 rounded-full border text-xs font-bold shadow-2xs"
-               style={{
-                 backgroundColor: activeConfig.badgeBg,
-                 borderColor: activeConfig.borderAccent,
-                 color: activeConfig.primaryTextColor,
-               }}>
+          <div
+            className="hidden md:flex items-center gap-2 px-3.5 py-1 rounded-full border text-xs font-bold shadow-2xs"
+            style={{
+              backgroundColor: activeConfig.badgeBg,
+              borderColor: activeConfig.borderAccent,
+              color: activeConfig.primaryTextColor,
+            }}
+          >
             <span className="text-sm">{activeConfig.avatarEmoji}</span>
             <span>Журнал {activeConfig.name}</span>
           </div>
@@ -97,14 +99,14 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="sm:hidden">Капсула</span>
           </button>
 
-          {/* Exit Journal Button (Shown when logged into a profile or viewing non-selection view) */}
+          {/* Exit Journal Button */}
           {currentView !== 'select' && (
             <button
               onClick={onNavigateSelect}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-300/80 transition-all cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-300 transition-all cursor-pointer shadow-2xs"
               title="Выйти из текущего журнала на экран выбора"
             >
-              <LogOut className="w-4 h-4 text-stone-600" />
+              <LogOut className="w-4 h-4 text-slate-600" />
               <span>Выйти из журнала</span>
             </button>
           )}

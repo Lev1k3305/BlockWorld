@@ -5,7 +5,20 @@ import { journalStorage } from '../../services/journalStorage';
 import { pinService } from '../../services/pinService';
 import { QuestionSectionPage } from './QuestionSectionPage';
 import { PhotosSection } from './PhotosSection';
-import { BookOpen, User, Heart, Sparkles, Compass, Image, LogOut, Lock, Key, Check, X, ShieldCheck } from 'lucide-react';
+import {
+  User,
+  Heart,
+  Sparkles,
+  Users,
+  Compass,
+  Mail,
+  MessageSquare,
+  Image,
+  LogOut,
+  Lock,
+  Key,
+  X,
+} from 'lucide-react';
 
 interface JournalBookProps {
   owner: JournalOwner;
@@ -18,11 +31,11 @@ export const JournalBook: React.FC<JournalBookProps> = ({
 }) => {
   const config = OWNER_CONFIGS[owner];
 
-  const [activeSection, setActiveSection] = useState<JournalSectionId>('about');
+  const [activeSection, setActiveSection] = useState<JournalSectionId>('chapter1');
   const [answersMap, setAnswersMap] = useState<Record<string, Answer>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // PIN settings modal state
+  // PIN modal
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [hasExistingPin, setHasExistingPin] = useState(false);
   const [pinInput, setPinInput] = useState('');
@@ -50,7 +63,12 @@ export const JournalBook: React.FC<JournalBookProps> = ({
     }
   };
 
-  const handleSaveAnswer = async (questionId: string, value: string | string[]) => {
+  const handleSaveAnswer = async (
+    questionId: string,
+    value: string | string[],
+    attachments?: { photoUrl?: string; drawingUrl?: string; voiceUrl?: string },
+    isShared: boolean = true
+  ) => {
     const question = JOURNAL_QUESTIONS.find((q) => q.id === questionId);
     if (!question) return;
 
@@ -61,6 +79,8 @@ export const JournalBook: React.FC<JournalBookProps> = ({
       questionId,
       sectionId: question.sectionId,
       value,
+      attachments,
+      isShared,
       updatedAt: Date.now(),
     };
 
@@ -89,13 +109,13 @@ export const JournalBook: React.FC<JournalBookProps> = ({
     }
   };
 
-  // PIN Settings Modal Handlers
+  // PIN settings
   const handleSavePin = async (e: React.FormEvent) => {
     e.preventDefault();
     setPinMessage(null);
 
     if (pinInput.length < 4) {
-      setPinMessage('PIN-код должен состоять минимум из 4 символов/цифр.');
+      setPinMessage('PIN-код должен состоять минимум из 4 символов.');
       return;
     }
 
@@ -119,13 +139,18 @@ export const JournalBook: React.FC<JournalBookProps> = ({
     setPinConfirm('');
   };
 
-  // Calculate total journal progress
+  // Calculate overall progress across 67 questions
   const totalQuestions = JOURNAL_QUESTIONS.length;
   const filledQuestions = JOURNAL_QUESTIONS.filter((q) => {
     const ans = answersMap[q.id];
     if (!ans) return false;
-    if (Array.isArray(ans.value)) return ans.value.length > 0;
-    return typeof ans.value === 'string' && ans.value.trim().length > 0;
+    const hasVal = Array.isArray(ans.value)
+      ? ans.value.length > 0
+      : typeof ans.value === 'string' && ans.value.trim().length > 0;
+    const hasAtt = Boolean(
+      ans.attachments?.photoUrl || ans.attachments?.drawingUrl || ans.attachments?.voiceUrl
+    );
+    return hasVal || hasAtt;
   }).length;
 
   const progressPercent = Math.round((filledQuestions / totalQuestions) * 100);
@@ -135,16 +160,18 @@ export const JournalBook: React.FC<JournalBookProps> = ({
       case 'User': return <User className="w-4 h-4" />;
       case 'Heart': return <Heart className="w-4 h-4" />;
       case 'Sparkles': return <Sparkles className="w-4 h-4" />;
+      case 'Users': return <Users className="w-4 h-4" />;
       case 'Compass': return <Compass className="w-4 h-4" />;
-      case 'BookOpen': return <BookOpen className="w-4 h-4" />;
+      case 'Mail': return <Mail className="w-4 h-4" />;
+      case 'MessageSquare': return <MessageSquare className="w-4 h-4" />;
       case 'Image': return <Image className="w-4 h-4" />;
-      default: return <BookOpen className="w-4 h-4" />;
+      default: return <Sparkles className="w-4 h-4" />;
     }
   };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 md:py-8">
-      {/* Top Banner: Personal Journal Title & Actions */}
+      {/* Header Profile Bar */}
       <div
         className="rounded-2xl p-6 mb-6 shadow-sm border-2 relative flex flex-wrap items-center justify-between gap-4"
         style={{
@@ -165,19 +192,19 @@ export const JournalBook: React.FC<JournalBookProps> = ({
                     style={{ backgroundColor: config.badgeBg, color: config.primaryTextColor }}>
                 {config.role}
               </span>
-              <span className="text-xs font-semibold text-[#8c7365]">
-                Заполнено: {filledQuestions}/{totalQuestions}
+              <span className="text-xs font-semibold text-[#64748b]">
+                Заполнено: {filledQuestions}/{totalQuestions} вопросов ({progressPercent}%)
               </span>
             </div>
             <h1 className="font-serif-book text-3xl sm:text-4xl font-bold mt-1"
                 style={{ color: config.primaryTextColor }}>
-              Личная книга {config.name}
+              Личный журнал {config.name}
             </h1>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          {/* PIN Settings Button */}
+          {/* PIN button */}
           <button
             onClick={() => {
               setPinMessage(null);
@@ -185,17 +212,17 @@ export const JournalBook: React.FC<JournalBookProps> = ({
               setPinConfirm('');
               setIsPinModalOpen(true);
             }}
-            className="px-3.5 py-2 rounded-xl bg-white/90 hover:bg-white text-stone-700 border border-stone-300/80 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
             title="Настройка PIN-кода для журнала"
           >
             <Lock className="w-4 h-4 text-amber-700" />
             <span>{hasExistingPin ? 'Изменить PIN' : 'Установить PIN'}</span>
           </button>
 
-          {/* Exit Journal Button */}
+          {/* Exit button */}
           <button
             onClick={onExitJournal}
-            className="px-4 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-900 text-stone-100 text-xs sm:text-sm font-bold flex items-center gap-2 transition-transform active:scale-98 cursor-pointer shadow-xs"
+            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition-transform active:scale-98 cursor-pointer shadow-xs"
           >
             <LogOut className="w-4 h-4" />
             <span>Выйти из журнала</span>
@@ -204,7 +231,7 @@ export const JournalBook: React.FC<JournalBookProps> = ({
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-[#ebdcd0]/60 rounded-full h-2.5 mb-6 overflow-hidden">
+      <div className="w-full bg-slate-200 rounded-full h-2.5 mb-6 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{
@@ -214,7 +241,7 @@ export const JournalBook: React.FC<JournalBookProps> = ({
         />
       </div>
 
-      {/* Section Tabs / Bookmarks */}
+      {/* Chapter Bookmarks Navigation Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 no-scrollbar border-b border-[#ebdcd0]">
         {JOURNAL_SECTIONS.map((sec) => {
           const isActive = activeSection === sec.id;
@@ -225,7 +252,7 @@ export const JournalBook: React.FC<JournalBookProps> = ({
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer border shadow-2xs ${
                 isActive
                   ? 'scale-102 font-extrabold shadow-xs'
-                  : 'bg-white/80 text-[#6e584b] border-[#ebdcd0] hover:bg-amber-50'
+                  : 'bg-white text-[#64748b] border-[#cbd5e1] hover:bg-slate-50'
               }`}
               style={{
                 backgroundColor: isActive ? config.badgeBg : undefined,
@@ -240,9 +267,9 @@ export const JournalBook: React.FC<JournalBookProps> = ({
         })}
       </div>
 
-      {/* Active Section Content */}
+      {/* Chapter Content */}
       {isLoading ? (
-        <div className="py-16 text-center text-[#8c7365] font-serif-book">
+        <div className="py-16 text-center text-slate-500 font-serif-book">
           Загрузка личного журнала {config.name}...
         </div>
       ) : activeSection === 'media' ? (
@@ -257,10 +284,10 @@ export const JournalBook: React.FC<JournalBookProps> = ({
         />
       )}
 
-      {/* Modal: Set/Change Local PIN */}
+      {/* PIN Modal */}
       {isPinModalOpen && (
-        <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-page-flip">
-          <div className="bg-[#fdfbf7] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#ebdcd0] relative">
+        <div className="fixed inset-0 z-50 bg-stone-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#fdfbf7] rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#ebdcd0] relative animate-page-flip">
             <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-[#ebdcd0]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
@@ -280,7 +307,7 @@ export const JournalBook: React.FC<JournalBookProps> = ({
             </div>
 
             <p className="text-xs text-[#7c5e4c] mb-4 leading-relaxed">
-              Установите 4-значный код для защиты входа в этот журнал на данном устройстве. Код сохраняется локально в зашифрованном виде (SHA-256).
+              Установите свой персональный PIN-код для защиты доступа к этой книге в данном браузере.
             </p>
 
             <form onSubmit={handleSavePin} className="space-y-4">
@@ -294,7 +321,7 @@ export const JournalBook: React.FC<JournalBookProps> = ({
                   required
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
-                  placeholder="Введите PIN (например: 1234)"
+                  placeholder="Введите PIN..."
                   className="w-full px-3.5 py-2 rounded-xl border border-[#ebdcd0] bg-white text-sm text-[#3d2b1f] focus:outline-none tracking-widest font-mono"
                 />
               </div>

@@ -1,13 +1,22 @@
 export type JournalOwner = 'alizhan' | 'dilnaz';
 
-export type QuestionType = 'text' | 'textarea' | 'single-choice' | 'multi-choice';
+export type QuestionType =
+  | 'text'
+  | 'textarea'
+  | 'single-choice'
+  | 'multi-choice'
+  | 'drawing'
+  | 'photo'
+  | 'voice';
 
 export type JournalSectionId =
-  | 'about'
-  | 'favorites'
-  | 'dreams'
-  | 'character'
-  | 'memories'
+  | 'chapter1'
+  | 'chapter2'
+  | 'chapter3'
+  | 'chapter4'
+  | 'chapter5'
+  | 'chapter6'
+  | 'chapter7'
   | 'media';
 
 export interface QuestionOption {
@@ -17,14 +26,22 @@ export interface QuestionOption {
 }
 
 export interface Question {
-  id: string;
+  id: string; // 'q1', 'q2', ... 'q67'
+  number: number; // 1..67
   sectionId: JournalSectionId;
-  title: string;
-  subtitle?: string;
+  title: string | { alizhan: string; dilnaz: string };
+  subtitle?: string | { alizhan: string; dilnaz: string };
   type: QuestionType;
   options?: QuestionOption[];
   placeholder?: string;
   allowCustomInput?: boolean;
+  allowAttachments?: boolean;
+}
+
+export interface AnswerAttachment {
+  photoUrl?: string;
+  drawingUrl?: string;
+  voiceUrl?: string;
 }
 
 export interface Answer {
@@ -33,6 +50,8 @@ export interface Answer {
   questionId: string;
   sectionId: JournalSectionId;
   value: string | string[];
+  attachments?: AnswerAttachment;
+  isShared?: boolean;
   updatedAt: number;
 }
 
@@ -51,12 +70,15 @@ export interface TimeCapsuleSnapshot {
   title: string;
   note?: string;
   createdAt: number;
+  targetOpenDate?: string;
   answers: Record<string, string | string[]>;
+  attachments?: Record<string, AnswerAttachment>;
 }
 
 export interface JournalSectionInfo {
   id: JournalSectionId;
   title: string;
+  number?: number;
   iconName: string;
   subtitle: string;
 }
