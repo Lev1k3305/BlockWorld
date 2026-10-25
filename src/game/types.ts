@@ -1,6 +1,7 @@
 export type HeroType = 'sister' | 'brother';
 
 export type GameScreen = 
+  | 'welcome'
   | 'menu' 
   | 'character_select' 
   | 'playing' 

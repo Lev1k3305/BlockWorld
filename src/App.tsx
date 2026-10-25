@@ -20,6 +20,7 @@ import { GameEngine } from './game/GameEngine';
 import { sounds } from './services/soundEffects';
 
 // UI Components
+import { WelcomeScreen } from './components/ui/WelcomeScreen';
 import { MainMenu } from './components/ui/MainMenu';
 import { GameHUD } from './components/game/GameHUD';
 import { TouchControls } from './components/game/TouchControls';
@@ -35,7 +36,7 @@ export default function App() {
   const engineRef = useRef<GameEngine | null>(null);
 
   // App & Game State
-  const [screen, setScreen] = useState<GameScreen>('menu');
+  const [screen, setScreen] = useState<GameScreen>('welcome');
   const [heroType, setHeroType] = useState<HeroType>(() => loadSelectedHero());
   const [questState, setQuestState] = useState<QuestState>(() => loadQuestState());
   const [settings, setSettings] = useState<GameSettings>(() => loadSettings());
@@ -198,6 +199,15 @@ export default function App() {
         ref={canvasMountRef} 
         className="absolute inset-0 w-full h-full z-0 touch-none pointer-events-auto"
       />
+
+      {/* Welcome Screen - Portal to Their World */}
+      {screen === 'welcome' && (
+        <WelcomeScreen
+          onOpenPortal={() => {
+            setScreen('menu');
+          }}
+        />
+      )}
 
       {/* Main Menu Screen */}
       {screen === 'menu' && (
