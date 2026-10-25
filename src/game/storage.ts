@@ -1,7 +1,8 @@
 import { GameSettings, HeroType, QuestState } from './types';
 
 const STORAGE_KEYS = {
-  QUEST: 'blockworld_quest_state_v1',
+  QUEST: 'blockworld_quest_state_v2',
+  QUEST_LEGACY: 'blockworld_quest_state_v1',
   SETTINGS: 'blockworld_settings_v1',
   HERO: 'blockworld_selected_hero_v1',
 };
@@ -27,7 +28,7 @@ export const defaultSettings: GameSettings = {
 
 export function loadQuestState(): QuestState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.QUEST);
+    const raw = localStorage.getItem(STORAGE_KEYS.QUEST) || localStorage.getItem(STORAGE_KEYS.QUEST_LEGACY);
     if (raw) {
       return { ...defaultQuestState, ...JSON.parse(raw) };
     }
@@ -72,7 +73,7 @@ export function loadSelectedHero(): HeroType {
   } catch (e) {
     console.error('Failed to load hero choice', e);
   }
-  return 'sister';
+  return 'brother'; // Default to brother or sister
 }
 
 export function saveSelectedHero(hero: HeroType): void {
@@ -86,6 +87,7 @@ export function saveSelectedHero(hero: HeroType): void {
 export function resetGameProgress(): void {
   try {
     localStorage.removeItem(STORAGE_KEYS.QUEST);
+    localStorage.removeItem(STORAGE_KEYS.QUEST_LEGACY);
   } catch (e) {
     console.error('Failed to reset quest state', e);
   }
