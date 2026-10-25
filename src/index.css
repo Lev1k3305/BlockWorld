@@ -4,89 +4,115 @@
   body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: none;
-    font-family: 'Rubik', 'Nunito', system-ui, -apple-system, sans-serif;
-    background-color: #080c14;
-    color: #f1f5f9;
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    background-color: #f5efe6;
+    color: #3b2d27;
+    background-image: radial-gradient(#e5dad0 0.75px, transparent 0.75px);
+    background-size: 24px 24px;
   }
 }
 
-.font-game {
-  font-family: 'Russo One', sans-serif;
+.font-serif-book {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-handwriting {
+  font-family: 'Caveat', cursive, sans-serif;
 }
 
 .font-fun {
-  font-family: 'Rubik', 'Nunito', sans-serif;
+  font-family: 'Comfortaa', 'Nunito', sans-serif;
 }
 
-.font-pixel {
-  font-family: 'Russo One', monospace;
+/* Scrapbook & Paper Aesthetics */
+.paper-sheet {
+  background-color: #fdfbf7;
+  background-image: radial-gradient(#f0e6d8 0.5px, transparent 0.5px);
+  background-size: 16px 16px;
+  border: 1px solid #ebdcd0;
+  box-shadow: 0 10px 30px -5px rgba(92, 70, 50, 0.08), 0 4px 12px -2px rgba(92, 70, 50, 0.04);
 }
 
-/* Custom scrollbars */
+.paper-sheet-alizhan {
+  background-color: #fefaf7;
+  border-color: #f7ded6;
+  box-shadow: 0 12px 35px -5px rgba(224, 122, 95, 0.12), 0 4px 12px rgba(224, 122, 95, 0.05);
+}
+
+.paper-sheet-dilnaz {
+  background-color: #f9f8fe;
+  border-color: #e6e1f9;
+  box-shadow: 0 12px 35px -5px rgba(141, 114, 225, 0.12), 0 4px 12px rgba(141, 114, 225, 0.05);
+}
+
+.tape-top {
+  position: relative;
+}
+.tape-top::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  width: 90px;
+  height: 24px;
+  background-color: rgba(245, 230, 205, 0.75);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border-left: 2px dashed rgba(210, 190, 160, 0.5);
+  border-right: 2px dashed rgba(210, 190, 160, 0.5);
+  z-index: 10;
+}
+
+.polaroid-frame {
+  background-color: #ffffff;
+  padding: 12px 12px 40px 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0e8e0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.polaroid-frame:hover {
+  transform: scale(1.02) rotate(0.5deg);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* Custom scrollbar for warm paper feel */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: #f2e9de;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.5);
+  background: #d4c3b3;
   border-radius: 9999px;
 }
-
-/* Touch helpers */
-.touch-btn {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+::-webkit-scrollbar-thumb:hover {
+  background: #bfa895;
 }
 
-/* Subtle glassmorphism without backdrop blur performance hits on software-gl */
-.game-card {
-  background: rgba(15, 23, 42, 0.88);
-  border: 1px solid rgba(51, 65, 85, 0.7);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+/* Page animations */
+@keyframes pageFlipIn {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) rotateY(-8deg) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1000px) rotateY(0deg) scale(1);
+  }
 }
 
-.game-card-hover {
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.game-card-hover:hover {
-  border-color: rgba(96, 165, 250, 0.6);
-  transform: translateY(-2px);
-}
-.game-card-hover:active {
-  transform: translateY(1px);
+.animate-page-flip {
+  animation: pageFlipIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes portalFlash {
-  0% { opacity: 0; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.5); }
-  100% { opacity: 0; transform: scale(2.2); }
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(1deg); }
 }
 
-@keyframes spinSlow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-portal-flash {
-  animation: portalFlash 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.animate-spin-slow {
-  animation: spinSlow 12s linear infinite;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+.animate-float-gentle {
+  animation: floatGentle 4s ease-in-out infinite;
 }
