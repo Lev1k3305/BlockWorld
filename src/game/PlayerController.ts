@@ -1,135 +1,139 @@
-import * as THREE from 'three';
-import { CharacterRig } from './voxelModels';
+import { HeroType } from './types';
 import { sounds } from '../services/soundEffects';
 
 export interface MovementInput {
-  forward: number; // -1 to 1
-  right: number;   // -1 to 1
+  forward: number; // -1 to 1 (in 2D top-down: -1 is down/back, +1 is up/forward)
+  right: number;   // -1 to 1 (in 2D top-down: -1 is left, +1 is right)
   jump: boolean;
 }
 
+export type Direction = 'down' | 'up' | 'left' | 'right';
+export type AnimationState = 'idle' | 'walk' | 'interact' | 'celebrate';
+
+export class Vector3D {
+  constructor(public x: number = 0, public y: number = 0, public z: number = 0) {}
+
+  set(x: number, y: number, z: number) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    return this;
+  }
+
+  clone() {
+    return new Vector3D(this.x, this.y, this.z);
+  }
+
+  copy(v: Vector3D) {
+    this.x = v.x;
+    this.y = v.y;
+    this.z = v.z;
+    return this;
+  }
+
+  distanceTo(v: Vector3D) {
+    const dx = this.x - v.x;
+    const dy = this.y - v.y;
+    const dz = this.z - v.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+}
+
 export class PlayerController {
-  public position: THREE.Vector3 = new THREE.Vector3(0, 0, 4);
-  public velocity: THREE.Vector3 = new THREE.Vector3();
+  public position: Vector3D = new Vector3D(0, 0, 4);
+  public velocity: Vector3D = new Vector3D();
+  public facingDirection: Direction = 'down';
+  public animState: AnimationState = 'idle';
+  public animFrame: number = 0;
+  public animTimer: number = 0;
+  public heroType: HeroType = 'brother';
   public isGrounded: boolean = true;
   public rotationY: number = 0;
-  public targetRotationY: number = 0;
 
-  private speed: number = 6.2;
-  private jumpForce: number = 8.5;
-  private gravity: number = 22.0;
+  public speed: number = 5.5; // Tile units per second
   private footstepTimer: number = 0;
 
-  constructor(public rig: CharacterRig) {
-    this.rig.root.position.copy(this.position);
+  constructor(heroType: HeroType = 'brother') {
+    this.heroType = heroType;
+  }
+
+  public setHeroType(hero: HeroType) {
+    this.heroType = hero;
   }
 
   public setPosition(x: number, y: number, z: number) {
     this.position.set(x, y, z);
     this.velocity.set(0, 0, 0);
-    this.rig.root.position.copy(this.position);
   }
 
   public update(
     delta: number,
     input: MovementInput,
-    getGroundHeight: (x: number, z: number) => number,
-    isObstacle: (x: number, z: number) => boolean,
-    cameraAngle: number
+    isObstacle: (x: number, z: number) => boolean
   ) {
-    // 1. Calculate horizontal movement relative to camera orientation
-    const moveX = input.right;
-    const moveZ = input.forward;
-    const hasInput = Math.hypot(moveX, moveZ) > 0.08;
+    // Top-down movement processing
+    // input.forward > 0 -> up/north (z decreasing)
+    // input.forward < 0 -> down/south (z increasing)
+    // input.right > 0 -> right/east (x increasing)
+    // input.right < 0 -> left/west (x decreasing)
 
-    let targetVelX = 0;
-    let targetVelZ = 0;
+    let moveX = input.right;
+    let moveZ = -input.forward; // Forward is north (-Z)
 
-    if (hasInput) {
-      // Rotate input by camera angle
-      const inputAngle = Math.atan2(moveX, moveZ);
-      const moveAngle = inputAngle + cameraAngle;
+    const length = Math.hypot(moveX, moveZ);
 
-      const inputMag = Math.min(1, Math.hypot(moveX, moveZ));
-      targetVelX = Math.sin(moveAngle) * this.speed * inputMag;
-      targetVelZ = Math.cos(moveAngle) * this.speed * inputMag;
+    if (length > 0.08) {
+      // Normalize diagonal speed
+      moveX /= Math.max(1, length);
+      moveZ /= Math.max(1, length);
 
-      // Face direction of movement
-      this.targetRotationY = moveAngle;
+      this.velocity.x = moveX * this.speed;
+      this.velocity.z = moveZ * this.speed;
+
+      // Determine facing direction
+      if (Math.abs(moveX) > Math.abs(moveZ)) {
+        this.facingDirection = moveX > 0 ? 'right' : 'left';
+      } else {
+        this.facingDirection = moveZ > 0 ? 'down' : 'up';
+      }
+
+      this.animState = 'walk';
+
+      // Footstep sound
+      this.footstepTimer += delta * this.speed;
+      if (this.footstepTimer > 2.2) {
+        this.footstepTimer = 0;
+        sounds.playFootstep();
+      }
+    } else {
+      this.velocity.x = 0;
+      this.velocity.z = 0;
+      if (this.animState === 'walk') {
+        this.animState = 'idle';
+      }
     }
 
-    // Smooth horizontal velocity
-    this.velocity.x = THREE.MathUtils.damp(this.velocity.x, targetVelX, 14, delta);
-    this.velocity.z = THREE.MathUtils.damp(this.velocity.z, targetVelZ, 14, delta);
-
-    // Smooth rotation
-    // Calculate shortest angular distance
-    let diff = (this.targetRotationY - this.rotationY) % (Math.PI * 2);
-    if (diff < -Math.PI) diff += Math.PI * 2;
-    if (diff > Math.PI) diff -= Math.PI * 2;
-    this.rotationY += diff * Math.min(1, delta * 12);
-    this.rig.root.rotation.y = this.rotationY;
-
-    // 2. Jumping & Gravity
-    if (input.jump && this.isGrounded) {
-      this.velocity.y = this.jumpForce;
-      this.isGrounded = false;
-      sounds.playJump();
-    }
-
-    this.velocity.y -= this.gravity * delta;
-
-    // 3. Horizontal Collision & Move
+    // Collision & Movement
+    const playerRadius = 0.35;
     const nextX = this.position.x + this.velocity.x * delta;
     const nextZ = this.position.z + this.velocity.z * delta;
 
-    if (!isObstacle(nextX, this.position.z)) {
+    // Check X move
+    if (!isObstacle(nextX + (this.velocity.x > 0 ? playerRadius : -playerRadius), this.position.z)) {
       this.position.x = nextX;
     } else {
       this.velocity.x = 0;
     }
 
-    if (!isObstacle(this.position.x, nextZ)) {
+    // Check Z move
+    if (!isObstacle(this.position.x, nextZ + (this.velocity.z > 0 ? playerRadius : -playerRadius))) {
       this.position.z = nextZ;
     } else {
       this.velocity.z = 0;
     }
 
-    // 4. Vertical Collision & Ground Clamping
-    const nextY = this.position.y + this.velocity.y * delta;
-    const groundY = getGroundHeight(this.position.x, this.position.z);
-
-    if (nextY <= groundY) {
-      this.position.y = groundY;
-      this.velocity.y = 0;
-      this.isGrounded = true;
-    } else {
-      this.position.y = nextY;
-      this.isGrounded = false;
-    }
-
-    // Fall safety respawn if player drops off the floating island
-    if (this.position.y < -10) {
-      this.setPosition(0, 2, 4);
-      this.velocity.set(0, 0, 0);
-    }
-
-    this.rig.root.position.copy(this.position);
-
-    // 5. Update character animation
-    const horizSpeed = Math.hypot(this.velocity.x, this.velocity.z);
-    if (!this.isGrounded) {
-      this.rig.updateAnimation('jump', horizSpeed, delta);
-    } else if (horizSpeed > 0.4) {
-      this.rig.updateAnimation('walk', horizSpeed, delta);
-      // Footsteps
-      this.footstepTimer += delta * horizSpeed;
-      if (this.footstepTimer > 2.8) {
-        this.footstepTimer = 0;
-        sounds.playFootstep();
-      }
-    } else {
-      this.rig.updateAnimation('idle', 0, delta);
-    }
+    // Update animation timer
+    this.animTimer += delta * 8;
+    this.animFrame = Math.floor(this.animTimer) % 4;
   }
 }

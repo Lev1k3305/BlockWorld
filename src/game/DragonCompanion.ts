@@ -1,50 +1,50 @@
-import * as THREE from 'three';
-import { DragonRig } from './voxelModels';
+import { Direction, Vector3D } from './PlayerController';
 import { sounds } from '../services/soundEffects';
 
 export class DragonCompanion {
-  public position: THREE.Vector3 = new THREE.Vector3(1, 1, 3);
-  private targetOffset: THREE.Vector3 = new THREE.Vector3(1.4, 0.7, -1.2);
-  private currentAngle: number = 0;
+  public position: Vector3D = new Vector3D(1, 0, 3);
+  public animFrame: number = 0;
+  public animTimer: number = 0;
+  public isCelebrating: boolean = false;
+  public celebrateTimer: number = 0;
+  public isBirthdayMode: boolean = false;
 
-  constructor(public rig: DragonRig) {
-    this.rig.root.position.copy(this.position);
+  constructor() {}
+
+  public setPosition(x: number, y: number, z: number) {
+    this.position.set(x, y, z);
   }
 
   public celebrate() {
-    this.rig.celebrate();
+    this.isCelebrating = true;
+    this.celebrateTimer = 2.0;
     sounds.playDragonChirp();
   }
 
   public setBirthdayMode(enabled: boolean) {
-    this.rig.setBirthdayMode(enabled);
+    this.isBirthdayMode = enabled;
   }
 
-  public update(delta: number, playerPos: THREE.Vector3, playerRotY: number, playerJumping: boolean) {
-    // Offset relative to player orientation
-    const cos = Math.cos(playerRotY);
-    const sin = Math.sin(playerRotY);
+  public update(delta: number, playerPos: Vector3D, facingDir: Direction) {
+    let targetX = playerPos.x;
+    let targetZ = playerPos.z;
 
-    const worldTargetX = playerPos.x + (this.targetOffset.x * cos - this.targetOffset.z * sin);
-    const worldTargetY = playerPos.y + this.targetOffset.y + (playerJumping ? 0.8 : 0);
-    const worldTargetZ = playerPos.z + (this.targetOffset.x * sin + this.targetOffset.z * cos);
+    if (facingDir === 'down') { targetZ -= 0.9; targetX += 0.6; }
+    else if (facingDir === 'up') { targetZ += 0.9; targetX -= 0.6; }
+    else if (facingDir === 'left') { targetX += 0.9; targetZ += 0.5; }
+    else if (facingDir === 'right') { targetX -= 0.9; targetZ += 0.5; }
 
-    // Smoothly damp position towards target
-    this.position.x = THREE.MathUtils.damp(this.position.x, worldTargetX, 4, delta);
-    this.position.y = THREE.MathUtils.damp(this.position.y, worldTargetY, 5, delta);
-    this.position.z = THREE.MathUtils.damp(this.position.z, worldTargetZ, 4, delta);
-    this.rig.root.position.copy(this.position);
+    this.position.x += (targetX - this.position.x) * Math.min(1, delta * 4);
+    this.position.z += (targetZ - this.position.z) * Math.min(1, delta * 4);
 
-    // Face movement direction or face player
-    const distToPlayer = Math.hypot(this.position.x - playerPos.x, this.position.z - playerPos.z);
-    const dx = playerPos.x - this.position.x;
-    const dz = playerPos.z - this.position.z;
-    const targetAngle = Math.atan2(dx, dz);
+    this.animTimer += delta * 6;
+    this.animFrame = Math.floor(this.animTimer) % 4;
 
-    this.currentAngle = THREE.MathUtils.damp(this.currentAngle, targetAngle, 5, delta);
-    this.rig.root.rotation.y = this.currentAngle;
-
-    const isMoving = distToPlayer > 1.2;
-    this.rig.update(delta, isMoving);
+    if (this.isCelebrating) {
+      this.celebrateTimer -= delta;
+      if (this.celebrateTimer <= 0) {
+        this.isCelebrating = false;
+      }
+    }
   }
 }

@@ -70,8 +70,8 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
       let forward = 0;
       let right = 0;
 
-      if (keysPressed.current['w'] || keysPressed.current['arrowup'] || keysPressed.current['ц']) forward -= 1;
-      if (keysPressed.current['s'] || keysPressed.current['arrowdown'] || keysPressed.current['ы']) forward += 1;
+      if (keysPressed.current['w'] || keysPressed.current['arrowup'] || keysPressed.current['ц']) forward += 1;
+      if (keysPressed.current['s'] || keysPressed.current['arrowdown'] || keysPressed.current['ы']) forward -= 1;
       if (keysPressed.current['a'] || keysPressed.current['arrowleft'] || keysPressed.current['ф']) right -= 1;
       if (keysPressed.current['d'] || keysPressed.current['arrowright'] || keysPressed.current['в']) right += 1;
 
@@ -120,7 +120,7 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
 
         setKnobPos({ x: clampedX, y: clampedY });
 
-        const forward = clampedY / maxRadius;
+        const forward = -clampedY / maxRadius;
         const right = clampedX / maxRadius;
         onMovementChange(forward, right, isJumping.current);
         break;
@@ -142,10 +142,10 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
 
   const handleJumpPress = () => {
     isJumping.current = true;
-    onMovementChange(knobPos.y / 50, knobPos.x / 50, true);
+    onMovementChange(-knobPos.y / 50, knobPos.x / 50, true);
     setTimeout(() => {
       isJumping.current = false;
-      onMovementChange(knobPos.y / 50, knobPos.x / 50, false);
+      onMovementChange(-knobPos.y / 50, knobPos.x / 50, false);
     }, 160);
   };
 
@@ -210,15 +210,15 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
             </button>
           )}
 
-          {/* Refined Circular Jump Button (ПРЫЖОК) */}
+          {/* Circular Action Button */}
           <button
             onTouchStart={handleJumpPress}
             onClick={handleJumpPress}
             className="w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-emerald-500/80 to-teal-700/80 active:scale-90 text-white shadow-xl border border-emerald-300/60 flex flex-col items-center justify-center touch-btn backdrop-blur-sm"
-            aria-label="Прыжок"
+            aria-label="Действие"
           >
             <ArrowUp className="w-6 h-6 stroke-[3]" />
-            <span className="text-[10px] font-black font-fun uppercase tracking-wider mt-0.5 drop-shadow-sm">ПРЫЖОК</span>
+            <span className="text-[10px] font-black font-fun uppercase tracking-wider mt-0.5 drop-shadow-sm">ДЕЙСТВИЕ</span>
           </button>
         </div>
       </div>
