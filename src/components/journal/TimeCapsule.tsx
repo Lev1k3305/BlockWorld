@@ -4,8 +4,18 @@ import { JournalOwner, TimeCapsuleSnapshot, Answer } from '../../types/journal';
 import { JOURNAL_QUESTIONS, OWNER_CONFIGS, getQuestionTitle } from '../../constants/questions';
 import { journalStorage } from '../../services/journalStorage';
 
-export const TimeCapsule: React.FC = () => {
-  const [selectedOwner, setSelectedOwner] = useState<JournalOwner>('alizhan');
+interface TimeCapsuleProps {
+  activeOwner?: JournalOwner | null;
+}
+
+export const TimeCapsule: React.FC<TimeCapsuleProps> = ({ activeOwner }) => {
+  const [selectedOwner, setSelectedOwner] = useState<JournalOwner>(activeOwner || 'alizhan');
+
+  useEffect(() => {
+    if (activeOwner) {
+      setSelectedOwner(activeOwner);
+    }
+  }, [activeOwner]);
   const [snapshots, setSnapshots] = useState<TimeCapsuleSnapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

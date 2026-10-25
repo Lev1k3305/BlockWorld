@@ -21,37 +21,33 @@ export const UserSelectionPage: React.FC<UserSelectionPageProps> = ({
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 md:py-12 animate-page-flip">
       {/* Hero Welcome Banner */}
-      <div className="text-center max-w-3xl mx-auto mb-12 relative">
+      <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 relative">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100/90 border border-amber-300/80 text-amber-900 text-xs sm:text-sm font-semibold tracking-wide shadow-xs mb-4">
           <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
           <span>Персональный семейный журнал</span>
         </div>
 
-        <h1 className="font-serif-book text-4xl sm:text-5xl md:text-6xl font-bold text-[#3d2b1f] tracking-tight mb-4">
-          Два характера
+        <h1 className="font-serif-book text-3xl sm:text-5xl md:text-6xl font-bold text-[#3d2b1f] tracking-tight mb-3 sm:mb-4 px-2">
+          Привет! Это наше маленькое семейное пространство ❤️
         </h1>
 
-        <p className="font-handwriting text-2xl sm:text-3xl text-[#7c5e4c] leading-relaxed max-w-2xl mx-auto">
-          «Две истории. Две мечты. Тысячи маленьких воспоминаний».
-        </p>
-
-        <p className="mt-3 text-sm text-[#8c7365] max-w-xl mx-auto leading-normal">
-          Интерактивный журнал для Алижана и Дильназ. Выберите свою персональную книгу или откройте семейные разделы.
+        <p className="font-handwriting text-2xl sm:text-3xl text-[#7c5e4c] leading-relaxed max-w-2xl mx-auto px-2">
+          Выбери себя, чтобы открыть свою личную страницу.
         </p>
 
         {/* Paper tape decorative accent */}
         <div className="w-28 h-5 bg-amber-200/50 border-x-2 border-dashed border-amber-300/60 mx-auto mt-6 rotate-[-1deg] shadow-xs" />
       </div>
 
-      {/* Main Choice Cards: "Я — Алижан" vs "Я — Дильназ" */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-        {/* Alizhan Selection Card (Boy) */}
+      {/* Main Choice Cards: Alizhan vs Dilnaz */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-10">
+        {/* Alizhan Selection Card */}
         <div
           onClick={() => onSelectOwner('alizhan')}
-          className="paper-sheet rounded-2xl p-6 sm:p-8 cursor-pointer relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl border-2 border-sky-300 bg-slate-50 flex flex-col justify-between"
+          className="paper-sheet rounded-2xl p-6 sm:p-8 cursor-pointer relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl border-2 border-sky-300 bg-slate-50/90 flex flex-col justify-between"
         >
-          <div className="absolute -top-3 left-8 px-4 py-1 bg-sky-200 border border-sky-300 text-sky-950 text-xs font-bold rounded-xs rotate-[-2deg] shadow-xs flex items-center gap-1.5">
-            <span>👦 Книга Алижана</span>
+          <div className="absolute -top-3 left-6 sm:left-8 px-3.5 py-1 bg-sky-200 border border-sky-300 text-sky-950 text-xs font-bold rounded-xs rotate-[-2deg] shadow-xs flex items-center gap-1.5">
+            <span>👦 {OWNER_CONFIGS.alizhan.cardSubtitle}</span>
             {hasPinMap.alizhan && <Lock className="w-3 h-3 text-sky-800 inline" />}
           </div>
 
@@ -63,22 +59,22 @@ export const UserSelectionPage: React.FC<UserSelectionPageProps> = ({
                 </div>
                 <div>
                   <span className="text-xs font-bold tracking-wider uppercase text-sky-900 bg-sky-100 px-2.5 py-0.5 rounded-full">
-                    {OWNER_CONFIGS.alizhan.role}
+                    {OWNER_CONFIGS.alizhan.cardSubtitle}
                   </span>
                   <h2 className="font-serif-book text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
                     Алижан
                   </h2>
                 </div>
               </div>
-              <BookOpen className="w-8 h-8 text-sky-700 group-hover:rotate-6 transition-transform" />
+              <BookOpen className="w-8 h-8 text-sky-700 group-hover:rotate-6 transition-transform shrink-0" />
             </div>
 
             <p className="text-sm text-slate-600 leading-relaxed mb-6 font-fun">
-              Личная книга с любимыми вещами, мечтами, суперсилами и секретными ответами Алижана.
+              Личная книга с любимыми вещами, мечтами, суперсилами, вопросами и словами от старшего брата.
             </p>
           </div>
 
-          <div className="pt-4 border-t border-sky-200 flex items-center justify-between">
+          <div className="pt-4 border-t border-sky-200 flex items-center justify-between gap-2">
             <span className="font-serif-book text-base font-bold text-sky-900 flex items-center gap-2">
               <span>Я — Алижан</span>
               {hasPinMap.alizhan && (
@@ -87,20 +83,20 @@ export const UserSelectionPage: React.FC<UserSelectionPageProps> = ({
                 </span>
               )}
             </span>
-            <span className="px-4 py-2 rounded-xl bg-sky-700 text-white font-bold text-sm flex items-center gap-2 group-hover:bg-sky-800 transition-colors shadow-xs">
+            <span className="px-4 py-2.5 rounded-xl bg-sky-700 text-white font-bold text-sm flex items-center gap-2 group-hover:bg-sky-800 transition-colors shadow-xs">
               <span>Войти в журнал</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>
           </div>
         </div>
 
-        {/* Dilnaz Selection Card (Girl) */}
+        {/* Dilnaz Selection Card */}
         <div
           onClick={() => onSelectOwner('dilnaz')}
-          className="paper-sheet rounded-2xl p-6 sm:p-8 cursor-pointer relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl border-2 border-purple-300 bg-purple-50/50 flex flex-col justify-between"
+          className="paper-sheet rounded-2xl p-6 sm:p-8 cursor-pointer relative group transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl border-2 border-purple-300 bg-purple-50/60 flex flex-col justify-between"
         >
-          <div className="absolute -top-3 left-8 px-4 py-1 bg-purple-200 border border-purple-300 text-purple-950 text-xs font-bold rounded-xs rotate-[1.5deg] shadow-xs flex items-center gap-1.5">
-            <span>👧 Книга Дильназ</span>
+          <div className="absolute -top-3 left-6 sm:left-8 px-3.5 py-1 bg-purple-200 border border-purple-300 text-purple-950 text-xs font-bold rounded-xs rotate-[1.5deg] shadow-xs flex items-center gap-1.5">
+            <span>👧 {OWNER_CONFIGS.dilnaz.cardSubtitle}</span>
             {hasPinMap.dilnaz && <Lock className="w-3 h-3 text-purple-800 inline" />}
           </div>
 
@@ -112,22 +108,22 @@ export const UserSelectionPage: React.FC<UserSelectionPageProps> = ({
                 </div>
                 <div>
                   <span className="text-xs font-bold tracking-wider uppercase text-purple-900 bg-purple-100 px-2.5 py-0.5 rounded-full">
-                    {OWNER_CONFIGS.dilnaz.role}
+                    {OWNER_CONFIGS.dilnaz.cardSubtitle}
                   </span>
                   <h2 className="font-serif-book text-2xl sm:text-3xl font-bold text-purple-950 mt-1">
                     Дильназ
                   </h2>
                 </div>
               </div>
-              <BookOpen className="w-8 h-8 text-purple-600 group-hover:rotate-6 transition-transform" />
+              <BookOpen className="w-8 h-8 text-purple-600 group-hover:rotate-6 transition-transform shrink-0" />
             </div>
 
             <p className="text-sm text-purple-900/80 leading-relaxed mb-6 font-fun">
-              Персональная книга с историями, рисунками, вопросами от брата и заветными мечтами Дильназ.
+              Персональная книга с историями, рисунками, любимыми моментами и личным посланием от брата.
             </p>
           </div>
 
-          <div className="pt-4 border-t border-purple-200 flex items-center justify-between">
+          <div className="pt-4 border-t border-purple-200 flex items-center justify-between gap-2">
             <span className="font-serif-book text-base font-bold text-purple-900 flex items-center gap-2">
               <span>Я — Дильназ</span>
               {hasPinMap.dilnaz && (
@@ -136,7 +132,7 @@ export const UserSelectionPage: React.FC<UserSelectionPageProps> = ({
                 </span>
               )}
             </span>
-            <span className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold text-sm flex items-center gap-2 group-hover:bg-purple-700 transition-colors shadow-xs">
+            <span className="px-4 py-2.5 rounded-xl bg-purple-600 text-white font-bold text-sm flex items-center gap-2 group-hover:bg-purple-700 transition-colors shadow-xs">
               <span>Войти в журнал</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>

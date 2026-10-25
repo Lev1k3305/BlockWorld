@@ -23,11 +23,13 @@ import {
 interface JournalBookProps {
   owner: JournalOwner;
   onExitJournal: () => void;
+  onOpenBrotherMessage?: () => void;
 }
 
 export const JournalBook: React.FC<JournalBookProps> = ({
   owner,
   onExitJournal,
+  onOpenBrotherMessage,
 }) => {
   const config = OWNER_CONFIGS[owner];
 
@@ -219,15 +221,38 @@ export const JournalBook: React.FC<JournalBookProps> = ({
             <span>{hasExistingPin ? 'Изменить PIN' : 'Установить PIN'}</span>
           </button>
 
-          {/* Exit button */}
+          {/* Switch Profile button */}
           <button
             onClick={onExitJournal}
             className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition-transform active:scale-98 cursor-pointer shadow-xs"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Выйти из журнала</span>
+            <Users className="w-4 h-4" />
+            <span>Сменить профиль</span>
           </button>
         </div>
+      </div>
+
+      {/* Personal Welcome Greeting Banner */}
+      <div className="p-5 sm:p-6 rounded-2xl bg-amber-50/90 border-2 border-amber-300/80 shadow-xs mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-rose-100 text-rose-900 text-xs font-bold uppercase tracking-wider">
+            <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-600" />
+            <span>Персональное приветствие</span>
+          </div>
+          <p className="font-handwriting text-xl sm:text-2xl text-[#3d2b1f] leading-relaxed">
+            {config.welcomeMessage}
+          </p>
+        </div>
+
+        {onOpenBrotherMessage && (
+          <button
+            onClick={onOpenBrotherMessage}
+            className="px-5 py-2.5 rounded-xl bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs sm:text-sm shadow-xs transition-transform active:scale-95 shrink-0 cursor-pointer flex items-center gap-2"
+          >
+            <Mail className="w-4 h-4 text-rose-300" />
+            <span>Открыть послание от брата ❤️</span>
+          </button>
+        )}
       </div>
 
       {/* Progress Bar */}
